@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>白川村混雑度AI予測カレンダー</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* === ここからCSS（デザイン設定） === */
+        :root {
+            /* 混雑レベルに応じた「背景色」をここで定義 */
+            --bg-level-0: #f8f9fa; /* データなし */
+            --bg-level-1: #e7f5ff; /* 開散 (水色系) */
+            --bg-level-2: #d0ebff;
+            --bg-level-3: #a5d8ff;
+            --bg-level-4: #74c0fc;
+            --bg-level-5: #fff4e6; /* やや混雑 (オレンジ系) */
+            --bg-level-6: #ffe8cc;
+            --bg-level-7: #ffd8a8;
+            --bg-level-8: #ffc980;
+            --bg-level-9: #ffb75e;
+            --bg-level-10: #ffa94d;/* 最大混雑 */
+
+            /* 混雑レベルに応じた「円の色」をここで定義 */
+            --badge-level-1: #8e44ad; /* 紫 */
+            --badge-level-2: #3498db; /* 青 */
+            --badge-level-3: #1abc9c; /* 緑 */
+            --badge-level-4: #2ecc71; /* 明るい緑 */
+            --badge-level-5: #f1c40f; /* 黄 */
+            --badge-level-6: #e67e22; /* オレンジ */
+            --badge-level-7: #d35400; /* 濃いオレンジ */
+            --badge-level-8: #e74c3c; /* 赤オレンジ */
+            --badge-level-9: #c0392b; /* 赤 */
+            --badge-level-10: #a01c1c; /* 暗い赤 */
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 10px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 15px;
+        }
+
+        header h1 {
+            font-size: 1.3rem;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #1d3557;
+        }
+
+        .month-navigator {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .month-navigator button {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: #457b9d;
+            padding: 0 15px;
+            transition: color 0.2s;
+        }
+        .month-navigator button:hover {
+            color: #1d3557;
+        }
+        #current-month-year {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #1d3557;
+        }
+
+        #calendar-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: bold;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        .day-of-week.sun { color: #e63946; }
+        .day-of-week.sat { color: #457b9d; }
+
+        #calendar-body {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .day {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            border-radius: 8px;
+            padding: 3px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .day:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+        .day.empty { background-color: transparent; }
+        .day.has-data { background-color: var(--bg-color); }
+        .day.no-data { background-color: var(--bg-level-0); }
+        
+        .day .date {
+            font-weight: bold;
+            font-size: 0.9rem;
+            align-self: flex-end;
+            color: #333;
+        }
+        
+        .day .stats { line-height: 1.2; }
+        .day .stats .cars { color: #e63946; font-weight: bold; font-size: 0.85rem; }
+        .day .stats .people { color: #555; }
+        
+        .day .level {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8rem;
+            background-color: var(--badge-color);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .notes {
+            text-align: center;
+            font-size: 0.75rem;
+            margin: 20px 0;
+            padding: 0 10px;
+            color: #555;
+        }
+        .notes p { margin: 4px 0; }
+        .notes .important { color: #e63946; font-weight: bold; }
+
+        .legend h2 { font-size: 1.1rem; text-align: center; margin-bottom: 10px; color: #1d3557;}
+        .legend-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+        .legend-item { display: flex; align-items: center; }
+        .level-badge {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .loading-message, .error-message {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px 20px;
+            font-weight: bold;
+            color: #888;
+        }
+        .error-message { color: #c0392b; }
+
+        /* 各レベルの円の色 */
+        .level-badge-1 { background-color: var(--badge-level-1); }
+        .level-badge-2 { background-color: var(--badge-level-2); }
+        .level-badge-3 { background-color: var(--badge-level-3); }
+        .level-badge-4 { background-color: var(--badge-level-4); }
+        .level-badge-5 { background-color: var(--badge-level-5); }
+        .level-badge-6 { background-color: var(--badge-level-6); }
+        .level-badge-7 { background-color: var(--badge-level-7); }
+        .level-badge-8 { background-color: var(--badge-level-8); }
+        .level-badge-9 { background-color: var(--badge-level-9); }
+        .level-badge-10 { background-color: var(--badge-level-10); }
+
+        /* === ここまでCSS === */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>白川村混雑度AI予測カレンダー</h1>
+        </header>
+
+        <main>
+            <div class="month-navigator">
+                <button id="prev-month" aria-label="前の月へ">&lt;</button>
+                <div id="current-month-year"></div>
+                <button id="next-month" aria-label="次の月へ">&gt;</button>
+            </div>
+            <div id="calendar">
+                <div id="calendar-header">
+                    <div class="day-of-week sun">日</div>
+                    <div class="day-of-week">月</div>
+                    <div class="day-of-week">火</div>
+                    <div class="day-of-week">水</div>
+                    <div class="day-of-week">木</div>
+                    <div class="day-of-week">金</div>
+                    <div class="day-of-week sat">土</div>
+                </div>
+                <div id="calendar-body">
+                    <!-- カレンダーはJavaScriptで生成されます -->
+                </div>
+            </div>
+            <div class="notes">
+                <p class="important">※予測人数は普通車の台数のみから換算したものです。</p>
+                <p>※普通車の台数はせせらぎ、みだしま、寺尾の合算です。</p>
+                <p>※赤色の数字は台数、グレーの数字は人数を表しています。</p>
+            </div>
+        </main>
+
+        <footer>
+            <div class="legend">
+                <h2>混雑レベル</h2>
+                <div class="legend-grid">
+                    <div class="legend-item"><span class="level-badge level-badge-1">1</span> 開散</div>
+                    <div class="legend-item"><span class="level-badge level-badge-2">2</span> やや空いている</div>
+                    <div class="legend-item"><span class="level-badge level-badge-3">3</span> 普通</div>
+                    <div class="legend-item"><span class="level-badge level-badge-4">4</span> やや混雑</div>
+                    <div class="legend-item"><span class="level-badge level-badge-5">5</span> 混雑</div>
+                    <div class="legend-item"><span class="level-badge level-badge-6">6</span> 大変混雑</div>
+                    <div class="legend-item"><span class="level-badge level-badge-7">7</span> 非常に混雑</div>
+                    <div class="legend-item"><span class="level-badge level-badge-8">8</span> 極めて混雑</div>
+                    <div class="legend-item"><span class="level-badge level-badge-9">9</span> 危険な混雑</div>
+                    <div class="legend-item"><span class="level-badge level-badge-10">10</span> 最大混雑</div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+<script>
+// === ここからJavaScript（機能設定） ===
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    // --- 設定項目 ---
+
+    // ★★★ あなたのGoogleスプレッドシートの公開URLをここに貼り付け ★★★
+    const googleSheetUrl = 'ここにURLを貼り付け';
+
+    /**
+     * 混雑レベルを判定する基準（予測台数）を設定します。
+     * この台数「未満」の場合、そのレベルになります。
+     * 例：
+     * level_1: 350  -> 350台未満はレベル1
+     * level_2: 400  -> 350～399台はレベル2
+     * ...
+     * level_9: 900 -> 800～899台はレベル9
+     * 900台以上は自動的にレベル10になります。
+     */
+    const congestionThresholds = {
+        level_1: 350,
+        level_2: 400,
+        level_3: 500,
+        level_4: 550,
+        level_5: 650,
+        level_6: 700,
+        level_7: 750,
+        level_8: 800,
+        level_9: 900,
+    };
+
+    // --- ここまで設定項目 ---
+
+
+    // --- プログラム本体（通常は編集不要） ---
+    const calendarBody = document.getElementById('calendar-body');
+    const monthYearElement = document.getElementById('current-month-year');
+    const prevButton = document.getElementById('prev-month');
+    const nextButton = document.getElementById('next-month');
+    
+    let currentDate = new Date();
+    let allData = [];
+
+    function getCongestionLevel(cars) {
+        if (cars < congestionThresholds.level_1) return 1;
+        if (cars < congestionThresholds.level_2) return 2;
+        if (cars < congestionThresholds.level_3) return 3;
+        if (cars < congestionThresholds.level_4) return 4;
+        if (cars < congestionThresholds.level_5) return 5;
+        if (cars < congestionThresholds.level_6) return 6;
+        if (cars < congestionThresholds.level_7) return 7;
+        if (cars < congestionThresholds.level_8) return 8;
+        if (cars < congestionThresholds.level_9) return 9;
+        return 10;
+    }
+
+    function renderCalendar(year, month) {
+        calendarBody.innerHTML = ''; // カレンダーを一旦空にする
+        monthYearElement.textContent = `${year}年 ${month + 1}月`;
+        
+        const firstDayOfWeek = new Date(year, month, 1).getDay(); // 0:日曜, 1:月曜...
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // 1日より前の空セルを追加
+        for (let i = 0; i < firstDayOfWeek; i++) {
+            calendarBody.insertAdjacentHTML('beforeend', '<div class="day empty"></div>');
+        }
+
+        // 各日付のセルを生成
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const data = allData.find(d => d.date === dateStr);
+            
+            let dayCellHtml;
+            if (data && data.cars !== null && data.people !== null) {
+                const level = getCongestionLevel(data.cars);
+                dayCellHtml = `
+                    <div class="day has-data" style="--bg-color: var(--bg-level-${level});">
+                        <div class="stats">
+                            <div class="cars">${data.cars}</div>
+                            <div class="people">${data.people}</div>
+                        </div>
+                        <div class="date">${day}</div>
+                        <div class="level" style="--badge-color: var(--badge-level-${level});">${level}</div>
+                    </div>
+                `;
+            } else {
+                dayCellHtml = `
+                    <div class="day no-data">
+                        <div class="date">${day}</div>
+                    </div>
+                `;
+            }
+            calendarBody.insertAdjacentHTML('beforeend', dayCellHtml);
+        }
+    }
+
+    async function fetchDataAndRender() {
+        if (googleSheetUrl === 'ここにURLを貼り付け' || !googleSheetUrl) {
+            calendarBody.innerHTML = `<div class="error-message">エラー: GoogleスプレッドシートのURLが設定されていません。HTMLファイル内の 'googleSheetUrl' を設定してください。</div>`;
+            return;
+        }
+
+        calendarBody.innerHTML = `<div class="loading-message">データを読み込み中...</div>`;
+        try {
+            // Google SheetsはCSVへのアクセスをキャッシュするため、ユニークなクエリパラメータを追加して回避
+            const response = await fetch(`${googleSheetUrl}&t=${new Date().getTime()}`);
+            if (!response.ok) {
+                throw new Error(`ネットワークエラーが発生しました (ステータス: ${response.status})`);
+            }
+            const csvText = await response.text();
+            
+            // CSVをパースしてデータ配列を作成
+            allData = csvText.trim().split(/\r?\n/).slice(1).map(row => {
+                const [date, cars, people] = row.split(',');
+                if (!date || !cars || !people) return null; // データが不完全な行はスキップ
+                return { 
+                    date: date.trim(), 
+                    cars: parseInt(cars, 10), 
+                    people: parseInt(people, 10) 
+                };
+            }).filter(d => d !== null); // nullになった要素を除外
+
+            renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+
+        } catch (error) {
+            console.error('データの読み込みに失敗しました:', error);
+            calendarBody.innerHTML = `<div class="error-message">データの読み込みに失敗しました。<br>URLが正しいか、シートが「ウェブに公開」されているか確認してください。</div>`;
+        }
+    }
+
+    prevButton.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+    });
+
+    nextButton.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+    });
+    
+    // 初期表示
+    fetchDataAndRender();
+});
+
+// === ここまでJavaScript ===
+</script>
+</body>
+</html>
