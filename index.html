@@ -141,15 +141,15 @@
         }
 
         .level {
-            width: 18px; /* サイズを調整 */
-            height: 18px; /* サイズを調整 */
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             color: white;
             font-weight: bold;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 0.75rem; /* フォントサイズを調整 */
+            font-size: 0.75rem;
             background-color: var(--badge-color);
             box-shadow: 0 1px 2px rgba(0,0,0,0.2);
             flex-shrink: 0;
@@ -206,14 +206,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 18px; /* サイズを調整 */
-            height: 18px; /* サイズを調整 */
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             color: white;
             font-weight: bold;
             margin-right: 8px;
             flex-shrink: 0;
-            font-size: 0.75rem; /* フォントサイズを調整 */
+            font-size: 0.75rem;
             line-height: 1;
             padding-top: 1px;
         }
@@ -295,6 +295,12 @@
             font-size: 1.2rem;
             font-weight: bold;
             margin-bottom: 15px;
+        }
+        /* モーダル内のアイコンを大きくする */
+        .modal-level .level-badge {
+            width: 28px;
+            height: 28px;
+            font-size: 1rem;
         }
         .modal-stats p {
             font-size: 1.1rem;
@@ -454,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (cars < congestionThresholds.level_9) return 9;
         return 10;
     }
-
+    
     function updateNavButtonsState() {
         prevButton.disabled = currentDate.getFullYear() <= baseDate.getFullYear() && currentDate.getMonth() <= baseDate.getMonth();
         nextButton.disabled = currentDate.getFullYear() >= limitDate.getFullYear() && currentDate.getMonth() >= limitDate.getMonth();
@@ -510,7 +516,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
                 `;
-                dayCell.dataset.date = `${cellMonth + 1}/${cellDay} (${week[dayOfWeek]})`;
+                dayCell.dataset.month = cellMonth + 1;
+                dayCell.dataset.day = cellDay;
+                dayCell.dataset.dayOfWeek = week[dayOfWeek];
                 dayCell.dataset.level = level;
                 dayCell.dataset.cars = data.cars;
                 dayCell.dataset.people = data.people;
@@ -591,9 +599,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const dayCell = e.target.closest('.day.clickable');
         if (!dayCell) return;
 
-        const { date, level, cars, people, holidayName } = dayCell.dataset;
+        const { month, day, dayOfWeek, level, cars, people, holidayName } = dayCell.dataset;
         
-        modalDate.textContent = date;
+        // 日付を「6月6日(金)」形式にフォーマット
+        const formattedDate = `${month}月${day}日(${dayOfWeek})`;
+        modalDate.textContent = formattedDate;
         
         if (holidayName) {
             modalHoliday.textContent = holidayName;
