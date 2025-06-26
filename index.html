@@ -218,7 +218,6 @@
             padding-top: 1px;
         }
 
-        /* --- 読み込み中アニメーションのスタイル --- */
         .loading-container {
             grid-column: 1 / -1;
             display: flex;
@@ -245,8 +244,7 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* --- ここまでアニメーション --- */
-
+        
         .error-message { color: #c0392b; }
 
         .terms-link-container {
@@ -254,12 +252,13 @@
             margin-top: 25px;
             padding-bottom: 5px;
         }
-        .terms-link-container a {
+        .terms-link {
             font-size: 0.9rem;
             color: #555;
             text-decoration: none;
+            cursor: pointer;
         }
-        .terms-link-container a:hover {
+        .terms-link:hover {
             text-decoration: underline;
         }
         
@@ -337,7 +336,59 @@
          .modal-notes p {
             margin: 2px 0;
          }
-        /* --- ここまでモーダル --- */
+        
+        /* --- 利用規約モーダル --- */
+        .modal-content-terms {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .modal-terms-header {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: #aaa;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .close-button:hover {
+            color: #333;
+        }
+        .terms-text-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            text-align: left;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+        .terms-text-container h3 {
+            font-size: 1.1rem; /* 少し大きく */
+            font-weight: bold;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+            padding-bottom: 0.2em;
+            border-bottom: 1px solid #eee;
+        }
+        .terms-text-container p {
+            margin-bottom: 1em;
+        }
 
         .level-badge-1 { background-color: var(--badge-level-1); }
         .level-badge-2 { background-color: var(--badge-level-2); }
@@ -403,11 +454,11 @@
             </div>
         </footer>
          <div class="terms-link-container">
-            <a href="https://docs.google.com/document/d/15sKGod87h1vOkoodYzxVUnR41pLXd-5Xq5gVkPd3nfk/edit?usp=sharing" target="_blank" rel="noopener noreferrer">利用規約</a>
+            <span id="open-terms-link" class="terms-link">利用規約</span>
         </div>
     </div>
     
-    <!-- モーダルウィンドウ用のHTML -->
+    <!-- 日付詳細モーダル -->
     <div id="modal-overlay" class="modal-overlay">
         <div id="modal-content" class="modal-content">
             <h2 id="modal-date" class="modal-date"></h2>
@@ -420,6 +471,33 @@
             <div class="modal-notes">
                 <p>※予測人数は普通車の台数のみから換算したものです。</p>
                 <p>※普通車の台数はせせらぎ、みだしま、寺尾の合算です。</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 利用規約モーダル -->
+    <div id="terms-modal-overlay" class="modal-overlay">
+        <div class="modal-content modal-content-terms">
+            <button id="close-terms-button" class="close-button">&times;</button>
+            <h2 class="modal-terms-header">利用規約</h2>
+            <div class="terms-text-container">
+                <h3>白川村混雑度AI予測カレンダー 利用規約</h3>
+                <p>本規約は，名古屋大学大学院情報学研究科遠藤・浦田研究室が一般財団法人世界遺産白川郷合掌造り保存財団、白川村の協力に基づき提供する白川村混雑度AI予測カレンダー（以下、「本サービス」と言う。）について、利用者による利用の一切について適用されるものとします。本サービスの利用にあたっては本規約への同意を条件としますので、利用前に必ず本規約を確認のうえ、ご理解いただくようお願いします。</p>
+                <h3>本規約の適用範囲等</h3>
+                <p>1.利用者は、本サービスを利用する前に本規約に同意される必要があり、同意されない場合は、本サービスを利用いただけません。</p>
+                <p>2.本研究室では、利用者の了承を得ることなく本規約を変更する場合がございます。変更後の規約は、それが本サービスの画面に表示された時点で効力を発揮するものとします。本規約の変更後に本サービスを利用された場合は、変更後の規約に同意されたものとみなします。</p>
+
+                <h3>サービス内容等</h3>
+                <p>1.本サービスは、本研究室と一般財団法人世界遺産白川郷合掌造り保存財団、白川村の協力のもと、白川村荻町区の混雑度に関する情報を提供します。</p>
+                <p>2.データ取得のタイミング等の原因により、本サービス上での表示と実際の混雑状況が異なる場合があります。</p>
+                <p>3.本サービスは無料で提供しますが、本サービスを利用する際に発生する通信料については利用者負担となります。</p>
+                <p>4.本サービスは実証実験の一環として構築したものであり、予告なく運用の中断や内容の変更等を行うことがあります。</p>
+
+                <h3>免責事項</h3>
+                <p>本サービスは実証実験の一環として構築したものであり、本サービスを利用してなされた行為やその結果生じた損害（第三者に対するものを含みます。以下同じ。）について、利用者が一切の責任を負うことに同意するものとします。</p>
+                <p>1.本サービスにより提供する一切の情報について、可用性、正確性、有用性、特定の目的に対する適合性等を保障しません。</p>
+                <p>2.本サービスで得た情報に基づき利用者の判断により発生する一切の損害について、本研究室及び一般財団法人世界遺産白川郷合掌造り保存財団、白川村はいかなる責任も負いません。</p>
+                <p>3.本サービスの変更や内容の欠陥等によって生じたあらゆる損害について理由の如何に関わらず本研究室及び一般財団法人世界遺産白川郷合掌造り保存財団、白川村はいかなる責任も負いません。</p>
             </div>
         </div>
     </div>
@@ -451,6 +529,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const monthYearElement = document.getElementById('current-month-year');
     const prevButton = document.getElementById('prev-month');
     const nextButton = document.getElementById('next-month');
+    
+    // 日付詳細モーダル
     const modalOverlay = document.getElementById('modal-overlay');
     const modalContent = document.getElementById('modal-content');
     const modalDate = document.getElementById('modal-date');
@@ -458,6 +538,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalLevel = document.getElementById('modal-level');
     const modalCars = document.getElementById('modal-cars');
     const modalPeople = document.getElementById('modal-people');
+    
+    // 利用規約モーダル
+    const termsModalOverlay = document.getElementById('terms-modal-overlay');
+    const openTermsLink = document.getElementById('open-terms-link');
+    const closeTermsButton = document.getElementById('close-terms-button');
 
 
     const baseDate = new Date();
@@ -564,7 +649,6 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fetchDataAndRender() {
         const isUrlValid = (url) => url && url.startsWith('http') && url !== 'ここにURLを貼り付け';
         
-        // 読み込み表示をアニメーションに変更
         calendarBody.innerHTML = `
             <div class="loading-container">
                 <div class="loading-spinner"></div>
@@ -651,6 +735,21 @@ document.addEventListener('DOMContentLoaded', function() {
     modalOverlay.addEventListener('click', (e) => {
         if (e.target === modalOverlay) {
             modalOverlay.classList.remove('active');
+        }
+    });
+
+    // --- 利用規約モーダルのイベント ---
+    openTermsLink.addEventListener('click', () => {
+        termsModalOverlay.classList.add('active');
+    });
+    
+    closeTermsButton.addEventListener('click', () => {
+        termsModalOverlay.classList.remove('active');
+    });
+
+    termsModalOverlay.addEventListener('click', (e) => {
+        if (e.target === termsModalOverlay) {
+            termsModalOverlay.classList.remove('active');
         }
     });
 
