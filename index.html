@@ -10,30 +10,35 @@
     <style>
         /* === ここからCSS（デザイン設定） === */
         :root {
-            /* 混雑レベルに応じた「背景色」をここで定義 */
-            --bg-level-0: #f8f9fa; /* データなし */
-            --bg-level-1: #e7f5ff; /* 開散 (水色系) */
-            --bg-level-2: #d0ebff;
-            --bg-level-3: #a5d8ff;
-            --bg-level-4: #74c0fc;
-            --bg-level-5: #fff4e6; /* やや混雑 (オレンジ系) */
-            --bg-level-6: #ffe8cc;
-            --bg-level-7: #ffd8a8;
-            --bg-level-8: #ffc980;
-            --bg-level-9: #ffb75e;
-            --bg-level-10: #ffa94d;/* 最大混雑 */
+            /* 新しいカラーテーマ: 青→黄→赤 */
+            /* データなし */
+            --bg-level-0: #f8f9fa; 
+            
+            /* レベル 1-3: 青系 (閑散) */
+            --bg-level-1: #e3f2fd;
+            --bg-level-2: #e3f2fd;
+            --bg-level-3: #e3f2fd;
+            --badge-level-1: #2196f3;
+            --badge-level-2: #2196f3;
+            --badge-level-3: #2196f3;
 
-            /* 混雑レベルに応じた「円の色」をここで定義 */
-            --badge-level-1: #8e44ad; /* 紫 */
-            --badge-level-2: #3498db; /* 青 */
-            --badge-level-3: #1abc9c; /* 緑 */
-            --badge-level-4: #2ecc71; /* 明るい緑 */
-            --badge-level-5: #f1c40f; /* 黄 */
-            --badge-level-6: #e67e22; /* オレンジ */
-            --badge-level-7: #d35400; /* 濃いオレンジ */
-            --badge-level-8: #e74c3c; /* 赤オレンジ */
-            --badge-level-9: #c0392b; /* 赤 */
-            --badge-level-10: #a01c1c; /* 暗い赤 */
+            /* レベル 4-6: 黄系 (普通) */
+            --bg-level-4: #fffde7;
+            --bg-level-5: #fffde7;
+            --bg-level-6: #fffde7;
+            --badge-level-4: #ffc107;
+            --badge-level-5: #ffc107;
+            --badge-level-6: #ffc107;
+
+            /* レベル 7-10: 赤系 (混雑) */
+            --bg-level-7: #ffebee;
+            --bg-level-8: #ffebee;
+            --bg-level-9: #ffebee;
+            --bg-level-10: #ffebee;
+            --badge-level-7: #f44336;
+            --badge-level-8: #f44336;
+            --badge-level-9: #f44336;
+            --badge-level-10: #f44336;
         }
 
         body {
@@ -116,27 +121,22 @@
             gap: 5px;
         }
 
+        /* --- 日付セルのレイアウト変更 --- */
         .day {
             border-radius: 8px;
-            /* 縦長にするため aspect-ratio をやめて min-height を設定 */
             min-height: 85px; 
             padding: 4px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between; /* 上下いっぱいに要素を配置 */
-            position: relative;
+            position: relative; /* 子要素を絶対位置で配置するための基準 */
         }
         
         .day.empty { background-color: transparent; }
         .day.has-data { background-color: var(--bg-color); }
         .day.no-data { background-color: var(--bg-level-0); }
         
-        .day-top {
-            display: flex;
-            justify-content: flex-end; /* アイコンを右上に */
-        }
-
         .level {
+            position: absolute;
+            top: 4px;
+            right: 4px;
             width: 20px;
             height: 20px;
             border-radius: 50%;
@@ -150,27 +150,30 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
 
-        .day-bottom {
-            display: flex;
-            justify-content: space-between; /* 予測値と日付を両端に */
-            align-items: flex-end; /* 下揃え */
-            width: 100%;
-        }
-
         .stats { 
-            line-height: 1.2; 
-            font-size: 0.8rem;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* 上下左右中央揃え */
+            text-align: center;
+            width: 100%;
+            line-height: 1.3;
+            font-size: 0.9rem;
         }
         .stats .cars { color: #e63946; font-weight: bold; }
         .stats .people { color: #555; }
         
         .date {
+            position: absolute;
+            bottom: 4px;
+            left: 4px;
             font-weight: bold;
-            font-size: 1.1rem; /* 日付の文字を少し大きく */
+            font-size: 1.1rem;
         }
         .date.date-sun { color: #e63946; } /* 日曜日の日付の色 */
         .date.date-sat { color: #457b9d; } /* 土曜日の日付の色 */
 
+        /* --- ここまで日付セルのレイアウト変更 --- */
 
         .notes {
             text-align: center;
@@ -182,19 +185,23 @@
         .notes p { margin: 4px 0; }
         .notes .important { color: #e63946; font-weight: bold; }
 
+        /* --- 凡例の中央揃え --- */
         .legend-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            gap: 8px 16px;
             font-size: 0.85rem;
-            margin-top: 20px; /* タイトルを消した分の調整 */
+            margin: 20px auto 0; /* 上下マージンと、左右autoで中央揃え */
+            max-width: 350px; /* グリッドの最大幅 */
+            padding: 0 10px;
+            box-sizing: border-box;
         }
         .legend-item { display: flex; align-items: center; }
         .level-badge {
-            display: flex; /* 中央揃えのため flex を使用 */
+            display: flex;
             justify-content: center;
             align-items: center;
-            width: 20px; /* 日付の上の円とサイズを合わせる */
+            width: 20px;
             height: 20px;
             border-radius: 50%;
             color: white;
@@ -239,7 +246,6 @@
         .level-badge-9 { background-color: var(--badge-level-9); }
         .level-badge-10 { background-color: var(--badge-level-10); }
 
-        /* === ここまでCSS === */
     </style>
 </head>
 <body>
@@ -278,7 +284,7 @@
         <footer>
             <div class="legend">
                 <div class="legend-grid">
-                    <div class="legend-item"><span class="level-badge level-badge-1">1</span> 開散</div>
+                    <div class="legend-item"><span class="level-badge level-badge-1">1</span> 閑散</div>
                     <div class="legend-item"><span class="level-badge level-badge-2">2</span> やや空いている</div>
                     <div class="legend-item"><span class="level-badge level-badge-3">3</span> 普通</div>
                     <div class="legend-item"><span class="level-badge level-badge-4">4</span> やや混雑</div>
@@ -303,8 +309,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- 設定項目 ---
 
-    // ★★★ あなたのGoogleスプレッドシートの公開URLをここに貼り付け ★★★
+    // ★★★【今月分】のGoogleスプレッドシートの公開URLをここに貼り付け ★★★
     const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRIV6KB3W6RBgD-HTSyvl1l94Jw3l3ztE5Rs6Yr52ncnz3xRtOCT_8v7gx75WaP7djkd41QjCWtjHP_/pub?gid=0&single=true&output=csv';
+
+    // ★★★【来月分】のGoogleスプレッドシートの公開URLをここに貼り付け ★★★
+    // ※来月のデータが不要な場合や、1つのシートで管理する場合は空のままでOKです。
+    const googleSheetUrlNextMonth = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZyCJ09KE6WDVx0jW5GTrCcR6pf1L_Xmf2iKeW4dqdxTWJLEVD2M2e14NHD1aHOBhpN-XPbyEhawL2/pub?gid=0&single=true&output=csv';
 
     /**
      * 混雑レベルを判定する基準（予測台数）を設定します。
@@ -376,38 +386,27 @@ document.addEventListener('DOMContentLoaded', function() {
             const dayOfWeek = new Date(year, month, day).getDay();
 
             let dayCell;
+            let dateColorClass = '';
+            if (dayOfWeek === 0) dateColorClass = 'date-sun'; // 日曜日
+            if (dayOfWeek === 6) dateColorClass = 'date-sat'; // 土曜日
             
             if (data && data.cars !== null && data.people !== null) {
                 const level = getCongestionLevel(data.cars);
-                let dateColorClass = '';
-                if (dayOfWeek === 0) dateColorClass = 'date-sun'; // 日曜日
-                if (dayOfWeek === 6) dateColorClass = 'date-sat'; // 土曜日
 
                 dayCell = `
                     <div class="day has-data" style="--bg-color: var(--bg-level-${level});">
-                        <div class="day-top">
-                            <div class="level" style="--badge-color: var(--badge-level-${level});">${level}</div>
+                        <div class="level" style="--badge-color: var(--badge-level-${level});">${level}</div>
+                        <div class="stats">
+                            <div class="cars">${data.cars}</div>
+                            <div class="people">${data.people}</div>
                         </div>
-                        <div class="day-bottom">
-                            <div class="stats">
-                                <div class="cars">${data.cars}</div>
-                                <div class="people">${data.people}</div>
-                            </div>
-                            <div class="date ${dateColorClass}">${day}</div>
-                        </div>
+                        <div class="date ${dateColorClass}">${day}</div>
                     </div>
                 `;
             } else {
-                 let dateColorClass = '';
-                if (dayOfWeek === 0) dateColorClass = 'date-sun'; // 日曜日
-                if (dayOfWeek === 6) dateColorClass = 'date-sat'; // 土曜日
                 dayCell = `
                     <div class="day no-data">
-                        <div class="day-top"></div>
-                        <div class="day-bottom">
-                            <div></div>
-                            <div class="date ${dateColorClass}">${day}</div>
-                        </div>
+                        <div class="date ${dateColorClass}">${day}</div>
                     </div>
                 `;
             }
@@ -417,33 +416,61 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function fetchDataAndRender() {
-        if (googleSheetUrl === 'ここにURLを貼り付け' || !googleSheetUrl) {
-            calendarBody.innerHTML = `<div class="error-message">エラー: GoogleスプレッドシートのURLが設定されていません。HTMLファイル内の 'googleSheetUrl' を設定してください。</div>`;
+        const isUrlValid = (url) => url && url !== 'ここにURLを貼り付け';
+
+        if (!isUrlValid(googleSheetUrl) && !isUrlValid(googleSheetUrlNextMonth)) {
+            calendarBody.innerHTML = `<div class="error-message">エラー: スプレッドシートのURLが設定されていません。</div>`;
             return;
         }
 
         calendarBody.innerHTML = `<div class="loading-message">データを読み込み中...</div>`;
+
         try {
-            const response = await fetch(`${googleSheetUrl}&t=${new Date().getTime()}`);
-            if (!response.ok) {
-                throw new Error(`ネットワークエラーが発生しました (ステータス: ${response.status})`);
+            const fetchPromises = [];
+
+            if (isUrlValid(googleSheetUrl)) {
+                fetchPromises.push(fetch(`${googleSheetUrl}&t=${new Date().getTime()}`));
             }
-            const csvText = await response.text();
+            if (isUrlValid(googleSheetUrlNextMonth)) {
+                fetchPromises.push(fetch(`${googleSheetUrlNextMonth}&t=${new Date().getTime()}`));
+            }
+
+            const responses = await Promise.allSettled(fetchPromises);
+
+            let combinedData = [];
+            let fetchError = false;
+
+            for (const response of responses) {
+                if (response.status === 'fulfilled' && response.value.ok) {
+                    const csvText = await response.value.text();
+                    const parsedData = csvText.trim().split(/\r?\n/).slice(1).map(row => {
+                        const [date, cars, people] = row.split(',');
+                        if (!date || !cars || !people) return null;
+                        return {
+                            date: date.trim(),
+                            cars: parseInt(cars, 10),
+                            people: parseInt(people, 10)
+                        };
+                    }).filter(d => d !== null);
+                    combinedData = combinedData.concat(parsedData);
+                } else {
+                    fetchError = true;
+                    console.error('データの読み込みに失敗しました:', response.reason || (response.value ? `ステータス: ${response.value.status}`: '不明なエラー'));
+                }
+            }
             
-            allData = csvText.trim().split(/\r?\n/).slice(1).map(row => {
-                const [date, cars, people] = row.split(',');
-                if (!date || !cars || !people) return null;
-                return { 
-                    date: date.trim(), 
-                    cars: parseInt(cars, 10), 
-                    people: parseInt(people, 10) 
-                };
-            }).filter(d => d !== null); 
+            allData = combinedData.filter((item, index, self) =>
+                index === self.findIndex((t) => t.date === item.date)
+            );
+
+            if (allData.length === 0 && fetchError) {
+                 throw new Error('すべてのデータの読み込みに失敗しました。');
+            }
 
             renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
 
         } catch (error) {
-            console.error('データの読み込みに失敗しました:', error);
+            console.error('データ処理中にエラーが発生しました:', error);
             calendarBody.innerHTML = `<div class="error-message">データの読み込みに失敗しました。<br>URLが正しいか、シートが「ウェブに公開」されているか確認してください。</div>`;
         }
     }
