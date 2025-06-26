@@ -10,13 +10,11 @@
     <style>
         /* === ここからCSS（デザイン設定） === */
         :root {
-            /* 新しいカラーテーマ */
-            --bg-level-0: #f8f9fa; /* データなし */
-
-            /* 混雑度 1-10 のアイコンと背景色 */
-            --bg-level-1: #e3f2fd; --badge-level-1: #B3E5FC; /* 1と3の色を入れ替え */
+            /* カラーテーマ */
+            --bg-level-0: #f8f9fa;
+            --bg-level-1: #e3f2fd; --badge-level-1: #B3E5FC;
             --bg-level-2: #e3f2fd; --badge-level-2: #64B5F6;
-            --bg-level-3: #e3f2fd; --badge-level-3: #128ff3; /* 1と3の色を入れ替え */
+            --bg-level-3: #e3f2fd; --badge-level-3: #128ff3;
             --bg-level-4: #f1f8e9; --badge-level-4: #B0E67E;
             --bg-level-5: #fffde7; --badge-level-5: #FFEB3B;
             --bg-level-6: #fff8e1; --badge-level-6: #FFC107;
@@ -26,18 +24,16 @@
             --bg-level-10: #ffebee; --badge-level-10: #CA3000;
         }
 
-        /* --- レイアウト崩れ防止のための修正 --- */
         *, *::before, *::after {
-            box-sizing: border-box; /* すべての要素で幅の計算方法を統一 */
+            box-sizing: border-box;
         }
-        /* --- ここまで修正 --- */
 
         body {
             font-family: 'Noto Sans JP', sans-serif;
             background-color: #f0f2f5;
             color: #333;
             margin: 0;
-            padding: 8px; /* 画面端の余白を少し調整 */
+            padding: 8px;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
@@ -121,6 +117,16 @@
             justify-content: space-between;
         }
         
+        .day.clickable {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .day.clickable:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
         .other-month {
             opacity: 0.5;
         }
@@ -147,6 +153,8 @@
             background-color: var(--badge-color);
             box-shadow: 0 1px 2px rgba(0,0,0,0.2);
             flex-shrink: 0;
+            line-height: 1;
+            padding-top: 1px;
         }
 
         .day-footer {
@@ -161,14 +169,13 @@
             line-height: 1.3;
             font-size: 0.9rem;
         }
-        .stats .cars { color: #e63946; font-weight: bold; }
+        .stats .cars { color: #e63946; }
         .stats .people { color: #555; }
         
         .date {
-            font-weight: bold;
-            font-size: 1rem; /* スマホ表示のため少しだけサイズ調整 */
+            font-size: 1rem;
         }
-        .date.date-sun { color: #e63946; }
+        .date.date-sun, .date.date-holiday { color: #e63946; }
         .date.date-sat { color: #1976D2; }
 
 
@@ -207,6 +214,8 @@
             margin-right: 8px;
             flex-shrink: 0;
             font-size: 0.85rem;
+            line-height: 1;
+            padding-top: 1px;
         }
 
         .loading-message, .error-message {
@@ -231,6 +240,84 @@
         .terms-link-container a:hover {
             text-decoration: underline;
         }
+        
+        /* --- モーダルウィンドウのスタイル --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 1000;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            padding: 25px 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            line-height: 1.8;
+            color: #333;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-date {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .modal-holiday {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #c0392b;
+            margin-bottom: 10px;
+        }
+        .modal-level {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .modal-stats p {
+            font-size: 1.1rem;
+            margin: 8px 0; /* 少し行間を広げる */
+            display: flex; /* アイコンとテキストを揃える */
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-stats img {
+            height: 1.2em;
+            margin-right: 8px;
+        }
+        .modal-notes {
+            margin-top: 20px;
+            font-size: 0.7rem;
+            line-height: 1.4;
+            color: #555;
+            text-align: left;
+        }
+         .modal-notes p {
+            margin: 2px 0;
+         }
+        /* --- ここまでモーダル --- */
 
         .level-badge-1 { background-color: var(--badge-level-1); }
         .level-badge-2 { background-color: var(--badge-level-2); }
@@ -299,6 +386,24 @@
             <a href="https://docs.google.com/document/d/15sKGod87h1vOkoodYzxVUnR41pLXd-5Xq5gVkPd3nfk/edit?usp=sharing" target="_blank" rel="noopener noreferrer">利用規約</a>
         </div>
     </div>
+    
+    <!-- モーダルウィンドウ用のHTML -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div id="modal-content" class="modal-content">
+            <h2 id="modal-date" class="modal-date"></h2>
+            <p id="modal-holiday" class="modal-holiday"></p>
+            <div id="modal-level" class="modal-level"></div>
+            <div id="modal-stats" class="modal-stats">
+                <p id="modal-cars"></p>
+                <p id="modal-people"></p>
+            </div>
+            <div class="modal-notes">
+                <p>※予測人数は普通車の台数のみから換算したものです。</p>
+                <p>※普通車の台数はせせらぎ、みだしま、寺尾の合算です。</p>
+            </div>
+        </div>
+    </div>
+
 
 <script>
 // === ここからJavaScript（機能設定） ===
@@ -309,9 +414,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRIV6KB3W6RBgD-HTSyvl1l94Jw3l3ztE5Rs6Yr52ncnz3xRtOCT_8v7gx75WaP7djkd41QjCWtjHP_/pub?gid=0&single=true&output=csv';
     const googleSheetUrlNextMonth = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZyCJ09KE6WDVx0jW5GTrCcR6pf1L_Xmf2iKeW4dqdxTWJLEVD2M2e14NHD1aHOBhpN-XPbyEhawL2/pub?gid=0&single=true&output=csv';
 
+    // ★★★ 使用するアイコン画像のファイル名を指定 ★★★
+    const githubRepo = 'mdg-shirakawa/shirakawa-calendar';
+    const githubBranchName = 'main'; // ブランチ名が違う場合は 'master' などに修正
+    const carIconFileName = 'car.png'; // あなたがアップロードしたファイル名
+    const personIconFileName = 'person.png'; // あなたがアップロードしたファイル名
+    
+    // 画像のフルパスを生成
+    const carIconUrl = `https://raw.githubusercontent.com/${githubRepo}/${githubBranchName}/${carIconFileName}`;
+    const personIconUrl = `https://raw.githubusercontent.com/${githubRepo}/${githubBranchName}/${personIconFileName}`;
+
     const congestionThresholds = {
         level_1: 301,  level_2: 401,  level_3: 501,  level_4: 601,  level_5: 701,
         level_6: 801,  level_7: 901,  level_8: 1001, level_9: 1101,
+    };
+    
+    const levelDescriptions = {
+        1: '閑散', 2: 'やや空いている', 3: '普通', 4: 'やや混雑', 5: '混雑',
+        6: '大変混雑', 7: '非常に混雑', 8: '極めて混雑', 9: '危険な混雑', 10: '最大混雑'
     };
     // --- ここまで設定項目 ---
 
@@ -321,11 +441,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const monthYearElement = document.getElementById('current-month-year');
     const prevButton = document.getElementById('prev-month');
     const nextButton = document.getElementById('next-month');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modalContent = document.getElementById('modal-content');
+    const modalDate = document.getElementById('modal-date');
+    const modalHoliday = document.getElementById('modal-holiday');
+    const modalLevel = document.getElementById('modal-level');
+    const modalCars = document.getElementById('modal-cars');
+    const modalPeople = document.getElementById('modal-people');
+
 
     const baseDate = new Date();
     baseDate.setDate(1);
     let currentDate = new Date(baseDate);
     let allData = [];
+    let holidays = {}; 
 
     const limitDate = new Date(baseDate);
     limitDate.setMonth(limitDate.getMonth() + 1);
@@ -372,102 +501,94 @@ document.addEventListener('DOMContentLoaded', function() {
             const dateStr = `${cellYear}-${String(cellMonth + 1).padStart(2, '0')}-${String(cellDay).padStart(2, '0')}`;
             const data = allData.find(d => d.date === dateStr);
             const dayOfWeek = currentCellDate.getDay();
+            const week = [ "日", "月", "火", "水", "木", "金", "土" ];
+            const isHoliday = holidays[dateStr];
 
-            let dayCell;
             let dateColorClass = '';
-            if (dayOfWeek === 0) dateColorClass = 'date-sun';
-            if (dayOfWeek === 6) dateColorClass = 'date-sat';
+            if (dayOfWeek === 0 || isHoliday) dateColorClass = 'date-sun';
+            else if (dayOfWeek === 6) dateColorClass = 'date-sat';
+
+            let dayCell = document.createElement('div');
 
             if (data && data.cars !== null && data.people !== null) {
                 const level = getCongestionLevel(data.cars);
-
-                dayCell = `
-                    <div class="day has-data ${otherMonthClass}" style="--bg-color: var(--bg-level-${level});">
-                        <div class="day-header">
-                            <div class="date ${dateColorClass}">${cellDay}</div>
-                            <div class="level" style="--badge-color: var(--badge-level-${level});">${level}</div>
-                        </div>
-                        <div class="day-footer">
-                             <div class="stats">
-                                <div class="cars">${data.cars}</div>
-                                <div class="people">${data.people}</div>
-                            </div>
+                dayCell.className = `day has-data clickable ${otherMonthClass}`;
+                dayCell.style.setProperty('--bg-color', `var(--bg-level-${level})`);
+                
+                dayCell.innerHTML = `
+                    <div class="day-header">
+                        <div class="date ${dateColorClass}">${cellDay}</div>
+                        <div class="level" style="--badge-color: var(--badge-level-${level});">${level}</div>
+                    </div>
+                    <div class="day-footer">
+                         <div class="stats">
+                            <div class="cars">${data.cars}</div>
+                            <div class="people">${data.people}</div>
                         </div>
                     </div>
                 `;
+                dayCell.dataset.date = `${cellMonth + 1}/${cellDay} (${week[dayOfWeek]})`;
+                dayCell.dataset.level = level;
+                dayCell.dataset.cars = data.cars;
+                dayCell.dataset.people = data.people;
+                if(isHoliday) dayCell.dataset.holidayName = isHoliday;
+
+
             } else {
-                dayCell = `
-                    <div class="day no-data ${otherMonthClass}">
-                        <div class="day-header">
-                            <div class="date ${dateColorClass}">${cellDay}</div>
-                        </div>
-                         <div class="day-footer"></div>
+                dayCell.className = `day no-data ${otherMonthClass}`;
+                dayCell.innerHTML = `
+                    <div class="day-header">
+                        <div class="date ${dateColorClass}">${cellDay}</div>
                     </div>
+                     <div class="day-footer"></div>
                 `;
             }
-            calendarBody.insertAdjacentHTML('beforeend', dayCell);
-
+            calendarBody.appendChild(dayCell);
             currentCellDate.setDate(currentCellDate.getDate() + 1);
         }
-
         updateNavButtonsState();
     }
 
     async function fetchDataAndRender() {
         const isUrlValid = (url) => url && url.startsWith('http') && url !== 'ここにURLを貼り付け';
-
-        if (!isUrlValid(googleSheetUrl) && (!isUrlValid(googleSheetUrlNextMonth) && googleSheetUrlNextMonth) ) {
-            calendarBody.innerHTML = `<div class="error-message">エラー: スプレッドシートのURLが設定されていません。</div>`;
-            return;
-        }
-
+        
         calendarBody.innerHTML = `<div class="loading-message">データを読み込み中...</div>`;
 
         try {
-            const fetchPromises = [];
+            const holidayApiUrl = 'https://holidays-jp.github.io/api/v1/date.json';
+            const fetchPromises = [ fetch(holidayApiUrl) ];
+            if (isUrlValid(googleSheetUrl)) fetchPromises.push(fetch(`${googleSheetUrl}&t=${new Date().getTime()}`));
+            if (isUrlValid(googleSheetUrlNextMonth)) fetchPromises.push(fetch(`${googleSheetUrlNextMonth}&t=${new Date().getTime()}`));
+            const [holidayResponse, ...sheetResponses] = await Promise.all(fetchPromises.map(p => p.catch(e => e)));
 
-            if (isUrlValid(googleSheetUrl)) {
-                fetchPromises.push(fetch(`${googleSheetUrl}&t=${new Date().getTime()}`));
+            if (holidayResponse.ok) {
+                 holidays = await holidayResponse.json();
+            } else {
+                console.error("祝日データの読み込みに失敗しました。");
             }
-            if (isUrlValid(googleSheetUrlNextMonth)) {
-                fetchPromises.push(fetch(`${googleSheetUrlNextMonth}&t=${new Date().getTime()}`));
-            }
-
-            const responses = await Promise.allSettled(fetchPromises);
 
             let combinedData = [];
-            let fetchError = false;
-
-            for (const response of responses) {
-                if (response.status === 'fulfilled' && response.value.ok) {
-                    const csvText = await response.value.text();
+            for (const response of sheetResponses) {
+                 if (response.ok) {
+                    const csvText = await response.text();
                     const parsedData = csvText.trim().split(/\r?\n/).slice(1).map(row => {
                         const [date, cars, people] = row.split(',');
                         if (!date || !cars || !people) return null;
-                        return {
-                            date: date.trim(), cars: parseInt(cars, 10), people: parseInt(people, 10)
-                        };
+                        return { date: date.trim(), cars: parseInt(cars, 10), people: parseInt(people, 10) };
                     }).filter(d => d !== null);
                     combinedData = combinedData.concat(parsedData);
                 } else {
-                    fetchError = true;
-                    console.error('データの読み込みに失敗しました:', response.reason || (response.value ? `ステータス: ${response.value.status}`: '不明なエラー'));
+                     console.error('シートデータの読み込みに失敗しました:', response);
                 }
             }
-
-            allData = combinedData.filter((item, index, self) =>
-                index === self.findIndex((t) => t.date === item.date)
-            );
-
-            if (allData.length === 0 && fetchError) {
-                 throw new Error('すべてのデータの読み込みに失敗しました。');
-            }
+            
+            allData = combinedData.filter((item, index, self) => index === self.findIndex((t) => t.date === item.date));
 
             renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
 
         } catch (error) {
             console.error('データ処理中にエラーが発生しました:', error);
-            calendarBody.innerHTML = `<div class="error-message">データの読み込みに失敗しました。<br>URLが正しいか、シートが「ウェブに公開」されているか確認してください。</div>`;
+            calendarBody.innerHTML = `<div class="error-message">データの読み込みに失敗しました。<br>URLが正しいか確認してください。</div>`;
         }
     }
 
@@ -481,6 +602,37 @@ document.addEventListener('DOMContentLoaded', function() {
         if (nextButton.disabled) return;
         currentDate.setMonth(currentDate.getMonth() + 1);
         renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+    });
+    
+    calendarBody.addEventListener('click', (e) => {
+        const dayCell = e.target.closest('.day.clickable');
+        if (!dayCell) return;
+
+        const { date, level, cars, people, holidayName } = dayCell.dataset;
+        
+        modalDate.textContent = date;
+        
+        if (holidayName) {
+            modalHoliday.textContent = holidayName;
+            modalHoliday.style.display = 'block';
+        } else {
+            modalHoliday.style.display = 'none';
+        }
+
+        modalLevel.innerHTML = `<span class="level-badge level-badge-${level}">${level}</span> ${levelDescriptions[level]}`;
+        modalCars.innerHTML = `<img src="${carIconUrl}" alt="車アイコン"> AI予測駐車台数: ${cars}台`;
+        modalPeople.innerHTML = `<img src="${personIconUrl}" alt="人数アイコン"> AI予測観光客数: ${people}人`;
+        
+        const bgColor = window.getComputedStyle(dayCell).getPropertyValue('background-color');
+        modalContent.style.backgroundColor = bgColor;
+
+        modalOverlay.classList.add('active');
+    });
+
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) {
+            modalOverlay.classList.remove('active');
+        }
     });
 
     // 初期表示
