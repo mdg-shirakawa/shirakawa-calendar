@@ -39,7 +39,7 @@
             max-width: 500px;
             margin: 0 auto;
             background-color: #fff;
-            border-radius: 6px;
+            border-radius: 6px; /* 角丸を小さく */
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             padding: 10px;
             box-sizing: border-box;
@@ -59,7 +59,7 @@
             align-items: center;
             padding: 5px 10px;
             background-color: #f8f9fa;
-            border-radius: 4px;
+            border-radius: 4px; /* 角丸を小さく */
             margin-bottom: 15px;
         }
         .month-navigator button {
@@ -99,36 +99,32 @@
         #calendar-body {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 0;
-            border-top: 1px solid #ddd;
-            border-left: 1px solid #ddd;
+            gap: 0; /* 枠線で区切るためgapを0に */
+            border-top: 1px solid #ddd; /* カレンダーの上枠 */
+            border-left: 1px solid #ddd; /* カレンダーの左枠 */
         }
-        
+
         .day {
-            min-height: 85px; 
+            min-height: 85px;
             padding: 4px;
-            border-right: 1px solid #ddd;
-            border-bottom: 1px solid #ddd;
+            position: relative;
+            border-right: 1px solid #ddd; /* 右の枠線 */
+            border-bottom: 1px solid #ddd; /* 下の枠線 */
             box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
         }
-        
+
+        /* 今月以外の日の透明度を調整 */
         .other-month {
             opacity: 0.5;
         }
-        
+
         .day.has-data { background-color: var(--bg-color); }
         .day.no-data { background-color: var(--bg-level-0); }
-        
-        .day-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
 
         .level {
+            position: absolute;
+            top: 4px;
+            right: 4px;
             width: 20px;
             height: 20px;
             border-radius: 50%;
@@ -140,36 +136,25 @@
             font-size: 0.85rem;
             background-color: var(--badge-color);
             box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-            flex-shrink: 0;
         }
 
-        .day-footer {
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            width: 100%;
-        }
-
-        .stats { 
+        .stats {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             text-align: center;
-            line-height: 1.5; /* 行間を少し広げて見やすく */
-            font-size: 0.85rem;
-        }
-        .stats div {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 100%;
+            line-height: 1.3;
+            font-size: 0.9rem;
         }
         .stats .cars { color: #e63946; font-weight: bold; }
         .stats .people { color: #555; }
-        .stats img {
-            height: 1em; /* 文字の高さに合わせる */
-            width: auto;
-            margin-right: 4px; /* 画像と数字の間のスペースを少し広げる */
-            vertical-align: middle; /* 垂直方向の中央揃えを保証 */
-        }
-        
+
         .date {
+            position: absolute;
+            bottom: 4px;
+            left: 4px;
             font-weight: bold;
             font-size: 1.1rem;
         }
@@ -271,8 +256,7 @@
                     <div class="day-of-week sat">土</div>
                 </div>
                 <div id="calendar-body">
-                    <!-- カレンダーはJavaScriptで生成されます -->
-                </div>
+                    </div>
             </div>
             <div class="notes">
                 <p class="important">※予測人数は普通車の台数のみから換算したものです。</p>
@@ -311,11 +295,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRIV6KB3W6RBgD-HTSyvl1l94Jw3l3ztE5Rs6Yr52ncnz3xRtOCT_8v7gx75WaP7djkd41QjCWtjHP_/pub?gid=0&single=true&output=csv';
     const googleSheetUrlNextMonth = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZyCJ09KE6WDVx0jW5GTrCcR6pf1L_Xmf2iKeW4dqdxTWJLEVD2M2e14NHD1aHOBhpN-XPbyEhawL2/pub?gid=0&single=true&output=csv';
 
-    // ★★★ 使用するアイコン画像のファイル名を指定 ★★★
-    // ※画像はindex.htmlと同じGitHubリポジトリにアップロードしてください。
-    const carIconFileName = 'car.jpg';
-    const personIconFileName = 'person.jpg';
-
     const congestionThresholds = {
         level_1: 350, level_2: 400, level_3: 500, level_4: 550, level_5: 650,
         level_6: 700, level_7: 750, level_8: 800, level_9: 900,
@@ -328,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const monthYearElement = document.getElementById('current-month-year');
     const prevButton = document.getElementById('prev-month');
     const nextButton = document.getElementById('next-month');
-    
+
     const baseDate = new Date();
     baseDate.setDate(1);
     let currentDate = new Date(baseDate);
@@ -358,21 +337,25 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderCalendar(year, month) {
         calendarBody.innerHTML = '';
         monthYearElement.textContent = `${year}年 ${month + 1}月`;
-        
+
+        // --- 新しい描画ロジック ---
+        // 描画開始日を計算 (表示月の1日が含まれる週の日曜日)
         const firstDayOfMonth = new Date(year, month, 1);
         const gridStartDate = new Date(firstDayOfMonth);
         gridStartDate.setDate(gridStartDate.getDate() - firstDayOfMonth.getDay());
 
+        // 描画終了日を計算 (表示月の末日が含まれる週の土曜日)
         const lastDayOfMonth = new Date(year, month + 1, 0);
         const gridEndDate = new Date(lastDayOfMonth);
         gridEndDate.setDate(gridEndDate.getDate() + (6 - lastDayOfMonth.getDay()));
-        
+
+        // 開始日から終了日までループしてセルを生成
         let currentCellDate = new Date(gridStartDate);
         while (currentCellDate <= gridEndDate) {
             const cellYear = currentCellDate.getFullYear();
             const cellMonth = currentCellDate.getMonth();
             const cellDay = currentCellDate.getDate();
-            
+
             const isCurrentMonth = cellMonth === month;
             const otherMonthClass = isCurrentMonth ? '' : 'other-month';
 
@@ -382,40 +365,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let dayCell;
             let dateColorClass = '';
-            if (dayOfWeek === 0) dateColorClass = 'date-sun';
-            if (dayOfWeek === 6) dateColorClass = 'date-sat';
-            
+            if (dayOfWeek === 0) dateColorClass = 'date-sun'; // 日曜日
+            if (dayOfWeek === 6) dateColorClass = 'date-sat'; // 土曜日
+
             if (data && data.cars !== null && data.people !== null) {
                 const level = getCongestionLevel(data.cars);
 
                 dayCell = `
                     <div class="day has-data ${otherMonthClass}" style="--bg-color: var(--bg-level-${level});">
-                        <div class="day-header">
-                            <div class="date ${dateColorClass}">${cellDay}</div>
-                            <div class="level" style="--badge-color: var(--badge-level-${level});">${level}</div>
+                        <div class="level" style="--badge-color: var(--badge-level-${level});">${level}</div>
+                        <div class="stats">
+                            <div class="cars">${data.cars}</div>
+                            <div class="people">${data.people}</div>
                         </div>
-                        <div class="day-footer">
-                             <div class="stats">
-                                <div class="cars"><img src="${carIconFileName}" alt="車"> ${data.cars}</div>
-                                <div class="people"><img src="${personIconFileName}" alt="人"> ${data.people}</div>
-                            </div>
-                        </div>
+                        <div class="date ${dateColorClass}">${cellDay}</div>
                     </div>
                 `;
             } else {
                 dayCell = `
                     <div class="day no-data ${otherMonthClass}">
-                        <div class="day-header">
-                            <div class="date ${dateColorClass}">${cellDay}</div>
-                        </div>
-                        <div class="day-footer"></div>
+                        <div class="date ${dateColorClass}">${cellDay}</div>
                     </div>
                 `;
             }
             calendarBody.insertAdjacentHTML('beforeend', dayCell);
+
+            // 次の日に進む
             currentCellDate.setDate(currentCellDate.getDate() + 1);
         }
-        
+        // --- ここまで新しい描画ロジック ---
+
         updateNavButtonsState();
     }
 
@@ -460,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('データの読み込みに失敗しました:', response.reason || (response.value ? `ステータス: ${response.value.status}`: '不明なエラー'));
                 }
             }
-            
+
             allData = combinedData.filter((item, index, self) =>
                 index === self.findIndex((t) => t.date === item.date)
             );
@@ -488,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
         currentDate.setMonth(currentDate.getMonth() + 1);
         renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
     });
-    
+
     // 初期表示
     fetchDataAndRender();
 });
