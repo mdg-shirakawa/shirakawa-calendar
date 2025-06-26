@@ -141,15 +141,15 @@
         }
 
         .level {
-            width: 20px;
-            height: 20px;
+            width: 18px; /* サイズを調整 */
+            height: 18px; /* サイズを調整 */
             border-radius: 50%;
             color: white;
             font-weight: bold;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 0.85rem;
+            font-size: 0.75rem; /* フォントサイズを調整 */
             background-color: var(--badge-color);
             box-shadow: 0 1px 2px rgba(0,0,0,0.2);
             flex-shrink: 0;
@@ -206,14 +206,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 20px;
-            height: 20px;
+            width: 18px; /* サイズを調整 */
+            height: 18px; /* サイズを調整 */
             border-radius: 50%;
             color: white;
             font-weight: bold;
             margin-right: 8px;
             flex-shrink: 0;
-            font-size: 0.85rem;
+            font-size: 0.75rem; /* フォントサイズを調整 */
             line-height: 1;
             padding-top: 1px;
         }
@@ -298,21 +298,14 @@
         }
         .modal-stats p {
             font-size: 1.1rem;
-            margin: 8px 0; /* 少し行間を広げる */
-            display: flex; /* アイコンとテキストを揃える */
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-stats img {
-            height: 1.2em;
-            margin-right: 8px;
+            margin: 5px 0;
         }
         .modal-notes {
             margin-top: 20px;
             font-size: 0.7rem;
             line-height: 1.4;
             color: #555;
-            text-align: left;
+            text-align: center;
         }
          .modal-notes p {
             margin: 2px 0;
@@ -413,16 +406,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- 設定項目 ---
     const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRIV6KB3W6RBgD-HTSyvl1l94Jw3l3ztE5Rs6Yr52ncnz3xRtOCT_8v7gx75WaP7djkd41QjCWtjHP_/pub?gid=0&single=true&output=csv';
     const googleSheetUrlNextMonth = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZyCJ09KE6WDVx0jW5GTrCcR6pf1L_Xmf2iKeW4dqdxTWJLEVD2M2e14NHD1aHOBhpN-XPbyEhawL2/pub?gid=0&single=true&output=csv';
-
-    // ★★★ 使用するアイコン画像のファイル名を指定 ★★★
-    const githubRepo = 'mdg-shirakawa/shirakawa-calendar';
-    const githubBranchName = 'main'; // ブランチ名が違う場合は 'master' などに修正
-    const carIconFileName = 'car.png'; // あなたがアップロードしたファイル名
-    const personIconFileName = 'person.png'; // あなたがアップロードしたファイル名
-    
-    // 画像のフルパスを生成
-    const carIconUrl = `https://raw.githubusercontent.com/${githubRepo}/${githubBranchName}/${carIconFileName}`;
-    const personIconUrl = `https://raw.githubusercontent.com/${githubRepo}/${githubBranchName}/${personIconFileName}`;
 
     const congestionThresholds = {
         level_1: 301,  level_2: 401,  level_3: 501,  level_4: 601,  level_5: 701,
@@ -620,8 +603,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         modalLevel.innerHTML = `<span class="level-badge level-badge-${level}">${level}</span> ${levelDescriptions[level]}`;
-        modalCars.innerHTML = `<img src="${carIconUrl}" alt="車アイコン"> AI予測駐車台数: ${cars}台`;
-        modalPeople.innerHTML = `<img src="${personIconUrl}" alt="人数アイコン"> AI予測観光客数: ${people}人`;
+        modalCars.textContent = `AI予測駐車台数: ${cars}台`;
+        modalPeople.textContent = `AI予測観光客数: ${people}人`;
         
         const bgColor = window.getComputedStyle(dayCell).getPropertyValue('background-color');
         modalContent.style.backgroundColor = bgColor;
