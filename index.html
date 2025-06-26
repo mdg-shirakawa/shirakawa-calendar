@@ -10,35 +10,18 @@
     <style>
         /* === ここからCSS（デザイン設定） === */
         :root {
-            /* 新しいカラーテーマ: 青→黄→赤 */
-            /* データなし */
-            --bg-level-0: #f8f9fa; 
-            
-            /* レベル 1-3: 青系 (閑散) */
-            --bg-level-1: #e3f2fd;
-            --bg-level-2: #e3f2fd;
-            --bg-level-3: #e3f2fd;
-            --badge-level-1: #2196f3;
-            --badge-level-2: #2196f3;
-            --badge-level-3: #2196f3;
-
-            /* レベル 4-6: 黄系 (普通) */
-            --bg-level-4: #fffde7;
-            --bg-level-5: #fffde7;
-            --bg-level-6: #fffde7;
-            --badge-level-4: #ffc107;
-            --badge-level-5: #ffc107;
-            --badge-level-6: #ffc107;
-
-            /* レベル 7-10: 赤系 (混雑) */
-            --bg-level-7: #ffebee;
-            --bg-level-8: #ffebee;
-            --bg-level-9: #ffebee;
-            --bg-level-10: #ffebee;
-            --badge-level-7: #f44336;
-            --badge-level-8: #f44336;
-            --badge-level-9: #f44336;
-            --badge-level-10: #f44336;
+            /* カラーテーマ: 青→黄→赤 */
+            --bg-level-0: #f8f9fa; /* データなし */
+            --bg-level-1: #e3f2fd; --badge-level-1: #2196f3; /* 青系 */
+            --bg-level-2: #e3f2fd; --badge-level-2: #2196f3;
+            --bg-level-3: #e3f2fd; --badge-level-3: #2196f3;
+            --bg-level-4: #fffde7; --badge-level-4: #ffc107; /* 黄系 */
+            --bg-level-5: #fffde7; --badge-level-5: #ffc107;
+            --bg-level-6: #fffde7; --badge-level-6: #ffc107;
+            --bg-level-7: #ffebee; --badge-level-7: #f44336; /* 赤系 */
+            --bg-level-8: #ffebee; --badge-level-8: #f44336;
+            --bg-level-9: #ffebee; --badge-level-9: #f44336;
+            --bg-level-10: #ffebee; --badge-level-10: #f44336;
         }
 
         body {
@@ -46,20 +29,20 @@
             background-color: #f0f2f5;
             color: #333;
             margin: 0;
-            padding: 5px; /* 全体の余白を少し調整 */
+            padding: 5px;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
         .container {
-            width: 100%; /* 横幅を画面いっぱいに */
+            width: 100%;
             max-width: 500px;
             margin: 0 auto;
             background-color: #fff;
-            border-radius: 12px;
+            border-radius: 6px; /* 角丸を小さく */
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             padding: 10px;
-            box-sizing: border-box; /* paddingを含めて幅を計算 */
+            box-sizing: border-box;
         }
 
         header h1 {
@@ -76,7 +59,7 @@
             align-items: center;
             padding: 5px 10px;
             background-color: #f8f9fa;
-            border-radius: 8px;
+            border-radius: 4px; /* 角丸を小さく */
             margin-bottom: 15px;
         }
         .month-navigator button {
@@ -108,8 +91,6 @@
             text-align: center;
             font-weight: bold;
             padding-bottom: 5px;
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 5px;
             font-size: 0.9rem;
         }
         .day-of-week.sun { color: #e63946; }
@@ -118,18 +99,25 @@
         #calendar-body {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-        }
-
-        /* --- 日付セルのレイアウト変更 --- */
-        .day {
-            border-radius: 8px;
-            min-height: 85px; 
-            padding: 4px;
-            position: relative; /* 子要素を絶対位置で配置するための基準 */
+            gap: 0; /* 枠線で区切るためgapを0に */
+            border-top: 1px solid #ddd; /* カレンダーの上枠 */
+            border-left: 1px solid #ddd; /* カレンダーの左枠 */
         }
         
-        .day.empty { background-color: transparent; }
+        .day {
+            min-height: 85px; 
+            padding: 4px;
+            position: relative;
+            border-right: 1px solid #ddd; /* 右の枠線 */
+            border-bottom: 1px solid #ddd; /* 下の枠線 */
+            box-sizing: border-box;
+        }
+        
+        /* 今月以外の日の透明度を調整 */
+        .other-month {
+            opacity: 0.5;
+        }
+        
         .day.has-data { background-color: var(--bg-color); }
         .day.no-data { background-color: var(--bg-level-0); }
         
@@ -154,7 +142,7 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%); /* 上下左右中央揃え */
+            transform: translate(-50%, -50%);
             text-align: center;
             width: 100%;
             line-height: 1.3;
@@ -170,10 +158,9 @@
             font-weight: bold;
             font-size: 1.1rem;
         }
-        .date.date-sun { color: #e63946; } /* 日曜日の日付の色 */
-        .date.date-sat { color: #457b9d; } /* 土曜日の日付の色 */
+        .date.date-sun { color: #e63946; }
+        .date.date-sat { color: #457b9d; }
 
-        /* --- ここまで日付セルのレイアウト変更 --- */
 
         .notes {
             text-align: center;
@@ -185,14 +172,13 @@
         .notes p { margin: 4px 0; }
         .notes .important { color: #e63946; font-weight: bold; }
 
-        /* --- 凡例の中央揃え --- */
         .legend-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px 16px;
             font-size: 0.85rem;
-            margin: 20px auto 0; /* 上下マージンと、左右autoで中央揃え */
-            max-width: 350px; /* グリッドの最大幅 */
+            margin: 20px auto 0;
+            max-width: 350px;
             padding: 0 10px;
             box-sizing: border-box;
         }
@@ -234,7 +220,6 @@
             text-decoration: underline;
         }
 
-        /* 各レベルの円の色 */
         .level-badge-1 { background-color: var(--badge-level-1); }
         .level-badge-2 { background-color: var(--badge-level-2); }
         .level-badge-3 { background-color: var(--badge-level-3); }
@@ -271,8 +256,7 @@
                     <div class="day-of-week sat">土</div>
                 </div>
                 <div id="calendar-body">
-                    <!-- カレンダーはJavaScriptで生成されます -->
-                </div>
+                    </div>
             </div>
             <div class="notes">
                 <p class="important">※予測人数は普通車の台数のみから換算したものです。</p>
@@ -308,30 +292,13 @@
 document.addEventListener('DOMContentLoaded', function() {
 
     // --- 設定項目 ---
-
-    // ★★★【今月分】のGoogleスプレッドシートの公開URLをここに貼り付け ★★★
     const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRIV6KB3W6RBgD-HTSyvl1l94Jw3l3ztE5Rs6Yr52ncnz3xRtOCT_8v7gx75WaP7djkd41QjCWtjHP_/pub?gid=0&single=true&output=csv';
-
-    // ★★★【来月分】のGoogleスプレッドシートの公開URLをここに貼り付け ★★★
-    // ※来月のデータが不要な場合や、1つのシートで管理する場合は空のままでOKです。
     const googleSheetUrlNextMonth = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZyCJ09KE6WDVx0jW5GTrCcR6pf1L_Xmf2iKeW4dqdxTWJLEVD2M2e14NHD1aHOBhpN-XPbyEhawL2/pub?gid=0&single=true&output=csv';
 
-    /**
-     * 混雑レベルを判定する基準（予測台数）を設定します。
-     * この台数「未満」の場合、そのレベルになります。
-     */
     const congestionThresholds = {
-        level_1: 350,
-        level_2: 400,
-        level_3: 500,
-        level_4: 550,
-        level_5: 650,
-        level_6: 700,
-        level_7: 750,
-        level_8: 800,
-        level_9: 900,
+        level_1: 350, level_2: 400, level_3: 500, level_4: 550, level_5: 650,
+        level_6: 700, level_7: 750, level_8: 800, level_9: 900,
     };
-
     // --- ここまで設定項目 ---
 
 
@@ -342,12 +309,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const nextButton = document.getElementById('next-month');
     
     const baseDate = new Date();
-    baseDate.setDate(1); // 基準日を今月の1日に設定
+    baseDate.setDate(1);
     let currentDate = new Date(baseDate);
-    
     let allData = [];
 
-    // 表示範囲の最終月を計算 (1ヶ月後 = 来月)
     const limitDate = new Date(baseDate);
     limitDate.setMonth(limitDate.getMonth() + 1);
 
@@ -370,20 +335,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderCalendar(year, month) {
-        calendarBody.innerHTML = ''; // カレンダーを一旦空にする
+        calendarBody.innerHTML = '';
         monthYearElement.textContent = `${year}年 ${month + 1}月`;
         
-        const firstDayOfWeek = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        // --- 新しい描画ロジック ---
+        // 描画開始日を計算 (表示月の1日が含まれる週の日曜日)
+        const firstDayOfMonth = new Date(year, month, 1);
+        const gridStartDate = new Date(firstDayOfMonth);
+        gridStartDate.setDate(gridStartDate.getDate() - firstDayOfMonth.getDay());
 
-        for (let i = 0; i < firstDayOfWeek; i++) {
-            calendarBody.insertAdjacentHTML('beforeend', '<div class="day empty"></div>');
-        }
+        // 描画終了日を計算 (表示月の末日が含まれる週の土曜日)
+        const lastDayOfMonth = new Date(year, month + 1, 0);
+        const gridEndDate = new Date(lastDayOfMonth);
+        gridEndDate.setDate(gridEndDate.getDate() + (6 - lastDayOfMonth.getDay()));
+        
+        // 開始日から終了日までループしてセルを生成
+        let currentCellDate = new Date(gridStartDate);
+        while (currentCellDate <= gridEndDate) {
+            const cellYear = currentCellDate.getFullYear();
+            const cellMonth = currentCellDate.getMonth();
+            const cellDay = currentCellDate.getDate();
+            
+            const isCurrentMonth = cellMonth === month;
+            const otherMonthClass = isCurrentMonth ? '' : 'other-month';
 
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dateStr = `${cellYear}-${String(cellMonth + 1).padStart(2, '0')}-${String(cellDay).padStart(2, '0')}`;
             const data = allData.find(d => d.date === dateStr);
-            const dayOfWeek = new Date(year, month, day).getDay();
+            const dayOfWeek = currentCellDate.getDay();
 
             let dayCell;
             let dateColorClass = '';
@@ -394,24 +372,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 const level = getCongestionLevel(data.cars);
 
                 dayCell = `
-                    <div class="day has-data" style="--bg-color: var(--bg-level-${level});">
+                    <div class="day has-data ${otherMonthClass}" style="--bg-color: var(--bg-level-${level});">
                         <div class="level" style="--badge-color: var(--badge-level-${level});">${level}</div>
                         <div class="stats">
                             <div class="cars">${data.cars}</div>
                             <div class="people">${data.people}</div>
                         </div>
-                        <div class="date ${dateColorClass}">${day}</div>
+                        <div class="date ${dateColorClass}">${cellDay}</div>
                     </div>
                 `;
             } else {
                 dayCell = `
-                    <div class="day no-data">
-                        <div class="date ${dateColorClass}">${day}</div>
+                    <div class="day no-data ${otherMonthClass}">
+                        <div class="date ${dateColorClass}">${cellDay}</div>
                     </div>
                 `;
             }
             calendarBody.insertAdjacentHTML('beforeend', dayCell);
+
+            // 次の日に進む
+            currentCellDate.setDate(currentCellDate.getDate() + 1);
         }
+        // --- ここまで新しい描画ロジック ---
+        
         updateNavButtonsState();
     }
 
@@ -447,9 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const [date, cars, people] = row.split(',');
                         if (!date || !cars || !people) return null;
                         return {
-                            date: date.trim(),
-                            cars: parseInt(cars, 10),
-                            people: parseInt(people, 10)
+                            date: date.trim(), cars: parseInt(cars, 10), people: parseInt(people, 10)
                         };
                     }).filter(d => d !== null);
                     combinedData = combinedData.concat(parsedData);
@@ -490,8 +471,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初期表示
     fetchDataAndRender();
 });
-
-// === ここまでJavaScript ===
 </script>
 </body>
 </html>
