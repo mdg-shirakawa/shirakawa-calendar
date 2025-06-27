@@ -7,21 +7,27 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <!-- グラフ表示ライブラリ(Chart.js)の追加 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* === ここからCSS（デザイン設定） === */
         :root {
-            /* カラーテーマ */
+            /* 新しいカラーテーマ */
             --bg-level-0: #f8f9fa;
-            --bg-level-1: #e3f2fd; --badge-level-1: #B3E5FC;
-            --bg-level-2: #e3f2fd; --badge-level-2: #64B5F6;
-            --bg-level-3: #e3f2fd; --badge-level-3: #128ff3;
-            --bg-level-4: #f1f8e9; --badge-level-4: #B0E67E;
-            --bg-level-5: #fffde7; --badge-level-5: #FFEB3B;
-            --bg-level-6: #fff8e1; --badge-level-6: #FFC107;
-            --bg-level-7: #fff3e0; --badge-level-7: #FF9800;
-            --bg-level-8: #fbe9e7; --badge-level-8: #FF5722;
-            --bg-level-9: #ffebee; --badge-level-9: #F13900;
-            --bg-level-10: #ffebee; --badge-level-10: #CA3000;
+            /* 青系 */
+            --bg-level-1: #e3f2fd; --badge-level-1: #90CAF9;
+            --bg-level-2: #d4ebfa; --badge-level-2: #42A5F5;
+            --bg-level-3: #c4e4f8; --badge-level-3: #1E88E5;
+            /* 緑系 */
+            --bg-level-4: #e8f5e9; --badge-level-4: #81C784;
+            --bg-level-5: #f1f8e9; --badge-level-5: #AED581;
+            /* 黄色系 */
+            --bg-level-6: #fffde7; --badge-level-6: #FFD54F;
+            --bg-level-7: #fff8e1; --badge-level-7: #FFB74D;
+            /* オレンジ・赤系（調整後） */
+            --bg-level-8: #ffebee; --badge-level-8: #FF7043;
+            --bg-level-9: #ffcdd2; --badge-level-9: #F44336;
+            --bg-level-10: #ffcdd2; --badge-level-10: #C62828;
         }
 
         *, *::before, *::after {
@@ -86,6 +92,11 @@
             font-size: 1.1rem;
             font-weight: bold;
             color: #1d3557;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        #current-month-year:hover {
+            color: #e63946;
         }
 
         #calendar-header {
@@ -103,18 +114,19 @@
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 0;
-            border-top: 1px solid #ddd;
-            border-left: 1px solid #ddd;
+            border-top: 1px solid #ccc;
+            border-left: 1px solid #ccc;
         }
         
         .day {
             min-height: 85px; 
             padding: 4px;
-            border-right: 1px solid #ddd;
-            border-bottom: 1px solid #ddd;
+            border-right: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            position: relative;
         }
         
         .day.clickable {
@@ -127,6 +139,10 @@
             z-index: 10;
         }
 
+        .day.today {
+            box-shadow: inset 0 0 0 2px #6c757d;
+        }
+        
         .other-month {
             opacity: 0.5;
         }
@@ -174,6 +190,7 @@
         
         .date {
             font-size: 1rem;
+            font-weight: bold;
         }
         .date.date-sun, .date.date-holiday { color: #e63946; }
         .date.date-sat { color: #1976D2; }
@@ -262,7 +279,7 @@
             text-decoration: underline;
         }
         
-        /* --- モーダルウィンドウのスタイル --- */
+        /* --- モーダルウィンドウ共通スタイル --- */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -282,7 +299,23 @@
             opacity: 1;
             visibility: visible;
         }
-        .modal-content {
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: #aaa;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .close-button:hover {
+            color: #333;
+        }
+        
+        /* --- 日付詳細モーダル --- */
+        .modal-content-day {
             padding: 25px 20px;
             border-radius: 8px;
             width: 90%;
@@ -292,9 +325,10 @@
             line-height: 1.8;
             color: #333;
             transform: scale(0.9);
-            transition: transform 0.3s;
+            transition: transform 0.3s, background-color 0.3s;
+            touch-action: none;
         }
-        .modal-overlay.active .modal-content {
+        .modal-overlay.active .modal-content-day {
             transform: scale(1);
         }
 
@@ -337,49 +371,73 @@
             margin: 2px 0;
          }
         
-        /* --- 利用規約モーダル --- */
-        .modal-content-terms {
+        /* --- 利用規約・グラフモーダル --- */
+        .modal-content-large {
             background: #fff;
-            padding: 20px;
             border-radius: 8px;
-            width: 90%;
-            max-width: 500px;
-            height: 80vh;
+            width: 95%;
+            max-width: 600px;
+            height: 85vh;
             display: flex;
             flex-direction: column;
             position: relative;
+            padding: 0;
         }
-        .modal-terms-header {
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: bold;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 15px;
+        .modal-large-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            flex-shrink: 0;
+            position: relative;
         }
-        .close-button {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            background: none;
-            border: none;
-            font-size: 2rem;
-            color: #aaa;
-            cursor: pointer;
-            line-height: 1;
+        .modal-large-header .close-button {
+             position: static;
+             transform: none;
+             order: 3;
         }
-        .close-button:hover {
-            color: #333;
-        }
-        .terms-text-container {
-            flex-grow: 1;
-            overflow-y: auto;
-            text-align: left;
+        .chart-month-display {
             font-size: 0.9rem;
-            line-height: 1.7;
+            font-weight: bold;
+            color: #333;
+            order: 1;
+        }
+        .chart-legend {
+            order: 2;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            flex-grow: 1;
+        }
+        .chart-legend-item {
+            display: flex;
+            align-items: center;
+            background-color: var(--color);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+        .chart-wrapper {
+             width: 100%;
+             overflow-x: auto;
+             height: calc(85vh - 50px);
+             position: relative;
+             padding: 0 15px 15px 15px;
+        }
+        .chart-container {
+             position: relative;
+             height: 100%;
+             width: 1200px;
+        }
+        
+        .scrollable-container {
+            flex-grow: 1;
+            overflow: auto;
+            padding: 0 20px 20px 20px;
         }
         .terms-text-container h3 {
-            font-size: 1.1rem; /* 少し大きく */
+            font-size: 1.1rem;
             font-weight: bold;
             margin-top: 1.5em;
             margin-bottom: 0.8em;
@@ -388,6 +446,8 @@
         }
         .terms-text-container p {
             margin-bottom: 1em;
+            font-size: 0.9rem;
+            line-height: 1.7;
         }
 
         .level-badge-1 { background-color: var(--badge-level-1); }
@@ -460,7 +520,7 @@
     
     <!-- 日付詳細モーダル -->
     <div id="modal-overlay" class="modal-overlay">
-        <div id="modal-content" class="modal-content">
+        <div id="modal-content-day" class="modal-content-day">
             <h2 id="modal-date" class="modal-date"></h2>
             <p id="modal-holiday" class="modal-holiday"></p>
             <div id="modal-level" class="modal-level"></div>
@@ -477,27 +537,50 @@
     
     <!-- 利用規約モーダル -->
     <div id="terms-modal-overlay" class="modal-overlay">
-        <div class="modal-content modal-content-terms">
-            <button id="close-terms-button" class="close-button">&times;</button>
-            <h2 class="modal-terms-header">利用規約</h2>
-            <div class="terms-text-container">
+        <div class="modal-content-large modal-content-terms">
+            <div class="modal-large-header">
+                <h2 style="font-size:1.1rem; margin:0;">利用規約</h2>
+                <button id="close-terms-button" class="close-button">&times;</button>
+            </div>
+            <div class="scrollable-container terms-text-container">
                 <h3>白川村混雑度AI予測カレンダー 利用規約</h3>
                 <p>本規約は，名古屋大学大学院情報学研究科遠藤・浦田研究室が一般財団法人世界遺産白川郷合掌造り保存財団、白川村の協力に基づき提供する白川村混雑度AI予測カレンダー（以下、「本サービス」と言う。）について、利用者による利用の一切について適用されるものとします。本サービスの利用にあたっては本規約への同意を条件としますので、利用前に必ず本規約を確認のうえ、ご理解いただくようお願いします。</p>
                 <h3>本規約の適用範囲等</h3>
                 <p>1.利用者は、本サービスを利用する前に本規約に同意される必要があり、同意されない場合は、本サービスを利用いただけません。</p>
                 <p>2.本研究室では、利用者の了承を得ることなく本規約を変更する場合がございます。変更後の規約は、それが本サービスの画面に表示された時点で効力を発揮するものとします。本規約の変更後に本サービスを利用された場合は、変更後の規約に同意されたものとみなします。</p>
-
                 <h3>サービス内容等</h3>
                 <p>1.本サービスは、本研究室と一般財団法人世界遺産白川郷合掌造り保存財団、白川村の協力のもと、白川村荻町区の混雑度に関する情報を提供します。</p>
                 <p>2.データ取得のタイミング等の原因により、本サービス上での表示と実際の混雑状況が異なる場合があります。</p>
                 <p>3.本サービスは無料で提供しますが、本サービスを利用する際に発生する通信料については利用者負担となります。</p>
                 <p>4.本サービスは実証実験の一環として構築したものであり、予告なく運用の中断や内容の変更等を行うことがあります。</p>
-
                 <h3>免責事項</h3>
                 <p>本サービスは実証実験の一環として構築したものであり、本サービスを利用してなされた行為やその結果生じた損害（第三者に対するものを含みます。以下同じ。）について、利用者が一切の責任を負うことに同意するものとします。</p>
                 <p>1.本サービスにより提供する一切の情報について、可用性、正確性、有用性、特定の目的に対する適合性等を保障しません。</p>
                 <p>2.本サービスで得た情報に基づき利用者の判断により発生する一切の損害について、本研究室及び一般財団法人世界遺産白川郷合掌造り保存財団、白川村はいかなる責任も負いません。</p>
                 <p>3.本サービスの変更や内容の欠陥等によって生じたあらゆる損害について理由の如何に関わらず本研究室及び一般財団法人世界遺産白川郷合掌造り保存財団、白川村はいかなる責任も負いません。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- グラフ表示モーダル -->
+    <div id="chart-modal-overlay" class="modal-overlay">
+        <div class="modal-content-large">
+             <div class="modal-large-header">
+                <span id="chart-month-year-display" class="chart-month-display"></span>
+                 <div class="chart-legend">
+                    <div class="chart-legend-item" style="--color: #e63946;">
+                        <span>AI予測駐車台数</span>
+                    </div>
+                    <div class="chart-legend-item" style="--color: #888;">
+                        <span>AI予測観光客数</span>
+                    </div>
+                </div>
+                <button id="close-chart-button" class="close-button">&times;</button>
+             </div>
+            <div class="chart-wrapper" id="chart-wrapper">
+                <div class="chart-container">
+                    <canvas id="forecastChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -530,26 +613,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const prevButton = document.getElementById('prev-month');
     const nextButton = document.getElementById('next-month');
     
-    // 日付詳細モーダル
     const modalOverlay = document.getElementById('modal-overlay');
-    const modalContent = document.getElementById('modal-content');
     const modalDate = document.getElementById('modal-date');
     const modalHoliday = document.getElementById('modal-holiday');
     const modalLevel = document.getElementById('modal-level');
     const modalCars = document.getElementById('modal-cars');
     const modalPeople = document.getElementById('modal-people');
     
-    // 利用規約モーダル
     const termsModalOverlay = document.getElementById('terms-modal-overlay');
     const openTermsLink = document.getElementById('open-terms-link');
     const closeTermsButton = document.getElementById('close-terms-button');
 
+    const chartModalOverlay = document.getElementById('chart-modal-overlay');
+    const closeChartButton = document.getElementById('close-chart-button');
+    const chartMonthYearDisplay = document.getElementById('chart-month-year-display');
+    const forecastCanvas = document.getElementById('forecastChart');
+    let forecastChartInstance;
 
     const baseDate = new Date();
     baseDate.setDate(1);
     let currentDate = new Date(baseDate);
     let allData = [];
     let holidays = {}; 
+    let dataWithClickableDates = [];
+    let currentModalIndex = -1;
+
+    let touchStartX = 0;
+    let touchEndX = 0;
 
     const limitDate = new Date(baseDate);
     limitDate.setMonth(limitDate.getMonth() + 1);
@@ -598,6 +688,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const dayOfWeek = currentCellDate.getDay();
             const week = [ "日", "月", "火", "水", "木", "金", "土" ];
             const isHoliday = holidays[dateStr];
+            
+            let today = new Date();
+            const isToday = today.getFullYear() === cellYear && today.getMonth() === cellMonth && today.getDate() === cellDay;
 
             let dateColorClass = '';
             if (dayOfWeek === 0 || isHoliday) dateColorClass = 'date-sun';
@@ -607,7 +700,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (data && data.cars !== null && data.people !== null) {
                 const level = getCongestionLevel(data.cars);
-                dayCell.className = `day has-data clickable ${otherMonthClass}`;
+                dayCell.className = `day has-data clickable ${otherMonthClass} ${isToday ? 'today' : ''}`;
                 dayCell.style.setProperty('--bg-color', `var(--bg-level-${level})`);
                 
                 dayCell.innerHTML = `
@@ -622,17 +715,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
                 `;
-                dayCell.dataset.month = cellMonth + 1;
-                dayCell.dataset.day = cellDay;
-                dayCell.dataset.dayOfWeek = week[dayOfWeek];
-                dayCell.dataset.level = level;
-                dayCell.dataset.cars = data.cars;
-                dayCell.dataset.people = data.people;
-                if(isHoliday) dayCell.dataset.holidayName = isHoliday;
-
+                dayCell.dataset.dateStr = dateStr;
 
             } else {
-                dayCell.className = `day no-data ${otherMonthClass}`;
+                dayCell.className = `day no-data ${otherMonthClass} ${isToday ? 'today' : ''}`;
                 dayCell.innerHTML = `
                     <div class="day-header">
                         <div class="date ${dateColorClass}">${cellDay}</div>
@@ -644,6 +730,186 @@ document.addEventListener('DOMContentLoaded', function() {
             currentCellDate.setDate(currentCellDate.getDate() + 1);
         }
         updateNavButtonsState();
+    }
+    
+    const chartBackgroundPlugin = {
+        id: 'chartBackgroundPlugin',
+        beforeDatasetsDraw(chart, args, options) {
+            const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
+            const backgroundColors = options.backgroundColors || [];
+            
+            ctx.save();
+            backgroundColors.forEach((color, i) => {
+                const xStart = x.getPixelForValue(i - 0.5);
+                const xEnd = x.getPixelForValue(i + 0.5);
+                const rectLeft = Math.max(xStart, left);
+                const rectRight = Math.min(xEnd, right);
+                if(rectRight > rectLeft){
+                    ctx.fillStyle = color;
+                    ctx.fillRect(rectLeft, top, rectRight - rectLeft, bottom - top);
+                }
+            });
+            ctx.restore();
+        }
+    };
+    
+    function renderChart(year, month) {
+        if (forecastChartInstance) forecastChartInstance.destroy();
+        
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const labels = Array.from({ length: daysInMonth }, (_, i) => `${i + 1}`);
+        
+        const carData = [];
+        const peopleData = [];
+        const tickStyles = [];
+        const backgroundColors = [];
+        
+        let yMax = 0;
+        const today = new Date();
+
+        for(let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const data = allData.find(d => d.date === dateStr);
+            const dayOfWeek = new Date(year, month, day).getDay();
+            const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+            
+            const cars = data ? data.cars : NaN;
+            const people = data ? data.people : NaN;
+            carData.push(cars);
+            peopleData.push(people);
+            if (people > yMax) yMax = people;
+            
+            let color = '#666';
+            let weight = 'normal';
+            if (isToday) {
+                weight = 'bold';
+            }
+            if (holidays[dateStr] || dayOfWeek === 0) {
+                color = '#e63946';
+            } else if (dayOfWeek === 6) {
+                color = '#1976D2';
+            }
+            tickStyles.push({ color, weight });
+
+            const level = data ? getCongestionLevel(data.cars) : 0;
+            const bgColor = getComputedStyle(document.documentElement).getPropertyValue(`--bg-level-${level}`).trim();
+            backgroundColors.push(bgColor);
+        }
+        
+        chartMonthYearDisplay.textContent = `${year}年${month + 1}月`;
+        
+        forecastChartInstance = new Chart(forecastCanvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'AI予測観光客数',
+                        data: peopleData,
+                        borderColor: '#888',
+                        backgroundColor: '#888',
+                        tension: 0.1,
+                        spanGaps: true,
+                    },
+                    {
+                        label: 'AI予測駐車台数',
+                        data: carData,
+                        borderColor: '#e63946',
+                        backgroundColor: '#e63946',
+                        tension: 0.1,
+                        spanGaps: true,
+                    }
+                ]
+            },
+            plugins: [chartBackgroundPlugin],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    chartBackgroundPlugin: {
+                        backgroundColors: backgroundColors
+                    },
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: true,
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: '#FFFFFF',
+                        titleColor: '#333333',
+                        bodyColor: '#333333',
+                        footerColor: '#333',
+                        borderColor: '#DDDDDD',
+                        borderWidth: 1,
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                const index = tooltipItems[0].dataIndex;
+                                const day = index + 1;
+                                const dayOfWeek = new Date(year, month, day).getDay();
+                                const week = [ "日", "月", "火", "水", "木", "金", "土" ];
+                                return `${month+1}月${day}日(${week[dayOfWeek]})`;
+                            },
+                            footer: function(tooltipItems) {
+                                const index = tooltipItems[0].dataIndex;
+                                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(index + 1).padStart(2, '0')}`;
+                                const data = allData.find(d => d.date === dateStr);
+                                if (!data) return '';
+                                const level = getCongestionLevel(data.cars);
+                                const desc = levelDescriptions[level];
+                                const icons = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+                                return `${icons[level - 1]} ${desc}`;
+                            }
+                        },
+                    }
+                },
+                scales: {
+                    x: { 
+                        ticks: { 
+                            color: (context) => tickStyles[context.index].color,
+                            font: (context) => ({ weight: tickStyles[context.index].weight })
+                        } 
+                    },
+                    y: { 
+                        beginAtZero: true,
+                        grace: '10%',
+                        position: 'left',
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.08)'
+                        }
+                    }
+                }
+            }
+        });
+
+        chartModalOverlay.classList.add('active');
+    }
+
+    function updateModal(index) {
+        if (index < 0 || index >= dataWithClickableDates.length) return;
+
+        currentModalIndex = index;
+        const data = dataWithClickableDates[index];
+        const date = new Date(data.date + 'T00:00:00');
+        const dayOfWeek = date.getDay();
+        const week = ["日", "月", "火", "水", "木", "金", "土"];
+
+        const formattedDate = `${date.getMonth() + 1}月${date.getDate()}日(${week[dayOfWeek]})`;
+        modalDate.textContent = formattedDate;
+
+        const holidayName = holidays[data.date];
+        if (holidayName) {
+            modalHoliday.textContent = holidayName;
+            modalHoliday.style.display = 'block';
+        } else {
+            modalHoliday.style.display = 'none';
+        }
+
+        const level = getCongestionLevel(data.cars);
+        modalLevel.innerHTML = `<span class="level-badge level-badge-${level}">${level}</span> ${levelDescriptions[level]}`;
+        modalCars.textContent = `AI予測駐車台数: ${data.cars}台`;
+        modalPeople.textContent = `AI予測観光客数: ${data.people}人`;
+        
+        const bgColor = getComputedStyle(document.documentElement).getPropertyValue(`--bg-level-${level}`).trim();
+        document.getElementById('modal-content-day').style.backgroundColor = bgColor;
     }
 
     async function fetchDataAndRender() {
@@ -663,7 +929,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isUrlValid(googleSheetUrlNextMonth)) fetchPromises.push(fetch(`${googleSheetUrlNextMonth}&t=${new Date().getTime()}`));
             const [holidayResponse, ...sheetResponses] = await Promise.all(fetchPromises.map(p => p.catch(e => e)));
 
-            if (holidayResponse.ok) {
+            if (holidayResponse && holidayResponse.ok) {
                  holidays = await holidayResponse.json();
             } else {
                 console.error("祝日データの読み込みに失敗しました。");
@@ -671,7 +937,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let combinedData = [];
             for (const response of sheetResponses) {
-                 if (response.ok) {
+                 if (response && response.ok) {
                     const csvText = await response.text();
                     const parsedData = csvText.trim().split(/\r?\n/).slice(1).map(row => {
                         const [date, cars, people] = row.split(',');
@@ -684,7 +950,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            allData = combinedData.filter((item, index, self) => index === self.findIndex((t) => t.date === item.date));
+            allData = combinedData.sort((a, b) => new Date(a.date) - new Date(b.date));
+            dataWithClickableDates = allData.filter(d => d.cars !== null && d.people !== null);
 
             renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
 
@@ -709,27 +976,14 @@ document.addEventListener('DOMContentLoaded', function() {
     calendarBody.addEventListener('click', (e) => {
         const dayCell = e.target.closest('.day.clickable');
         if (!dayCell) return;
+        
+        const dateStr = dayCell.dataset.dateStr;
+        currentModalIndex = dataWithClickableDates.findIndex(d => d.date === dateStr);
 
-        const { month, day, dayOfWeek, level, cars, people, holidayName } = dayCell.dataset;
-        
-        const formattedDate = `${month}月${day}日(${dayOfWeek})`;
-        modalDate.textContent = formattedDate;
-        
-        if (holidayName) {
-            modalHoliday.textContent = holidayName;
-            modalHoliday.style.display = 'block';
-        } else {
-            modalHoliday.style.display = 'none';
+        if(currentModalIndex !== -1) {
+            updateModal(currentModalIndex);
+            modalOverlay.classList.add('active');
         }
-
-        modalLevel.innerHTML = `<span class="level-badge level-badge-${level}">${level}</span> ${levelDescriptions[level]}`;
-        modalCars.textContent = `AI予測駐車台数: ${cars}台`;
-        modalPeople.textContent = `AI予測観光客数: ${people}人`;
-        
-        const bgColor = window.getComputedStyle(dayCell).getPropertyValue('background-color');
-        modalContent.style.backgroundColor = bgColor;
-
-        modalOverlay.classList.add('active');
     });
 
     modalOverlay.addEventListener('click', (e) => {
@@ -737,6 +991,31 @@ document.addEventListener('DOMContentLoaded', function() {
             modalOverlay.classList.remove('active');
         }
     });
+
+    // --- スワイプ機能のイベントリスナー ---
+    document.getElementById('modal-content-day').addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+
+    document.getElementById('modal-content-day').addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        const swipeThreshold = 50; // スワイプと判定する最小距離
+        if (touchStartX - touchEndX > swipeThreshold) {
+            // 左スワイプ -> 次の日へ
+            if (currentModalIndex < dataWithClickableDates.length - 1) {
+                updateModal(currentModalIndex + 1);
+            }
+        } else if (touchEndX - touchStartX > swipeThreshold) {
+            // 右スワイプ -> 前の日へ
+            if (currentModalIndex > 0) {
+                updateModal(currentModalIndex - 1);
+            }
+        }
+    }
 
     // --- 利用規約モーダルのイベント ---
     openTermsLink.addEventListener('click', () => {
@@ -750,6 +1029,21 @@ document.addEventListener('DOMContentLoaded', function() {
     termsModalOverlay.addEventListener('click', (e) => {
         if (e.target === termsModalOverlay) {
             termsModalOverlay.classList.remove('active');
+        }
+    });
+
+    // --- グラフモーダルのイベント ---
+    monthYearElement.addEventListener('click', () => {
+        renderChart(currentDate.getFullYear(), currentDate.getMonth());
+    });
+    
+    closeChartButton.addEventListener('click', () => {
+        chartModalOverlay.classList.remove('active');
+    });
+
+    chartModalOverlay.addEventListener('click', (e) => {
+        if (e.target === chartModalOverlay) {
+            chartModalOverlay.classList.remove('active');
         }
     });
 
