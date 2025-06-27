@@ -316,7 +316,7 @@
         
         /* --- 日付詳細モーダル --- */
         .modal-content-day {
-            position: relative;
+            position: relative; /* ×ボタン配置のため */
             padding: 25px 20px;
             border-radius: 8px;
             width: 90%;
@@ -326,21 +326,8 @@
             line-height: 1.8;
             color: #333;
             transition: background-color 0.3s;
+            touch-action: pan-y; /* 縦スクロールを許可 */
         }
-        .modal-swiper {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-card {
-            position: absolute;
-            width: 100%;
-            transition: transform 0.3s ease-out;
-        }
-
         .modal-date {
             font-size: 1.5rem;
             font-weight: bold;
@@ -529,20 +516,18 @@
     
     <!-- 日付詳細モーダル -->
     <div id="modal-overlay" class="modal-overlay">
-        <div class="modal-swiper">
-             <div id="modal-content-day" class="modal-content-day modal-card">
-                <button id="close-day-modal" class="close-button">&times;</button>
-                <h2 id="modal-date" class="modal-date"></h2>
-                <p id="modal-holiday" class="modal-holiday"></p>
-                <div id="modal-level" class="modal-level"></div>
-                <div id="modal-stats" class="modal-stats">
-                    <p id="modal-cars"></p>
-                    <p id="modal-people"></p>
-                </div>
-                <div class="modal-notes">
-                    <p>※予測人数は普通車の台数のみから換算したものです。</p>
-                    <p>※普通車の台数はせせらぎ、みだしま、寺尾の合算です。</p>
-                </div>
+        <div id="modal-content-day" class="modal-content-day">
+            <button id="close-day-modal" class="close-button">&times;</button>
+            <h2 id="modal-date" class="modal-date"></h2>
+            <p id="modal-holiday" class="modal-holiday"></p>
+            <div id="modal-level" class="modal-level"></div>
+            <div id="modal-stats" class="modal-stats">
+                <p id="modal-cars"></p>
+                <p id="modal-people"></p>
+            </div>
+            <div class="modal-notes">
+                <p>※予測人数は普通車の台数のみから換算したものです。</p>
+                <p>※普通車の台数はせせらぎ、みだしま、寺尾の合算です。</p>
             </div>
         </div>
     </div>
