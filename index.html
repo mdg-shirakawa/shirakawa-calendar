@@ -316,6 +316,7 @@
         
         /* --- 日付詳細モーダル --- */
         .modal-content-day {
+            position: relative; /* ×ボタン配置のため */
             padding: 25px 20px;
             border-radius: 8px;
             width: 90%;
@@ -324,14 +325,9 @@
             text-align: center;
             line-height: 1.8;
             color: #333;
-            transform: scale(0.9);
-            transition: transform 0.3s, background-color 0.3s;
-            touch-action: none;
+            transition: background-color 0.3s;
+            touch-action: pan-y; /* 縦スクロールを許可 */
         }
-        .modal-overlay.active .modal-content-day {
-            transform: scale(1);
-        }
-
         .modal-date {
             font-size: 1.5rem;
             font-weight: bold;
@@ -377,7 +373,7 @@
             border-radius: 8px;
             width: 95%;
             max-width: 600px;
-            height: 85vh;
+            height: 70vh; /* グラフの高さを調整 */
             display: flex;
             flex-direction: column;
             position: relative;
@@ -421,7 +417,7 @@
         .chart-wrapper {
              width: 100%;
              overflow-x: auto;
-             height: calc(85vh - 50px);
+             height: calc(70vh - 50px);
              position: relative;
              padding: 0 15px 15px 15px;
         }
@@ -521,6 +517,7 @@
     <!-- 日付詳細モーダル -->
     <div id="modal-overlay" class="modal-overlay">
         <div id="modal-content-day" class="modal-content-day">
+            <button id="close-day-modal" class="close-button">&times;</button>
             <h2 id="modal-date" class="modal-date"></h2>
             <p id="modal-holiday" class="modal-holiday"></p>
             <div id="modal-level" class="modal-level"></div>
@@ -614,6 +611,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const nextButton = document.getElementById('next-month');
     
     const modalOverlay = document.getElementById('modal-overlay');
+    const modalContentDay = document.getElementById('modal-content-day');
+    const closeDayModalButton = document.getElementById('close-day-modal');
     const modalDate = document.getElementById('modal-date');
     const modalHoliday = document.getElementById('modal-holiday');
     const modalLevel = document.getElementById('modal-level');
@@ -732,6 +731,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateNavButtonsState();
     }
     
+    // グラフの背景色を描画するカスタムプラグイン
     const chartBackgroundPlugin = {
         id: 'chartBackgroundPlugin',
         beforeDatasetsDraw(chart, args, options) {
@@ -909,7 +909,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modalPeople.textContent = `AI予測観光客数: ${data.people}人`;
         
         const bgColor = getComputedStyle(document.documentElement).getPropertyValue(`--bg-level-${level}`).trim();
-        document.getElementById('modal-content-day').style.backgroundColor = bgColor;
+        modalContentDay.style.backgroundColor = bgColor;
     }
 
     async function fetchDataAndRender() {
@@ -986,6 +986,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    closeDayModalButton.addEventListener('click', () => modalOverlay.classList.remove('active'));
     modalOverlay.addEventListener('click', (e) => {
         if (e.target === modalOverlay) {
             modalOverlay.classList.remove('active');
@@ -993,11 +994,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // --- スワイプ機能のイベントリスナー ---
-    document.getElementById('modal-content-day').addEventListener('touchstart', (e) => {
+    modalContentDay.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
     });
 
-    document.getElementById('modal-content-day').addEventListener('touchend', (e) => {
+    modalContentDay.addEventListener('touchend', (e) => {
         touchEndX = e.changedTouches[0].screenX;
         handleSwipe();
     });
