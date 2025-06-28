@@ -9,6 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
     <!-- グラフ表示ライブラリ(Chart.js)の追加 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- グラフのデータラベル表示プラグインの追加 -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
         /* === ここからCSS（デザイン設定） === */
         :root {
@@ -309,6 +311,7 @@
             color: #aaa;
             cursor: pointer;
             line-height: 1;
+            z-index: 10;
         }
         .close-button:hover {
             color: #333;
@@ -317,9 +320,9 @@
         /* --- 日付詳細モーダル（スワイプ機能対応） --- */
         #day-modal-swiper {
             position: relative;
-            width: 100%; /* スワイパーは画面幅いっぱいに */
-            touch-action: pan-y; /* 縦スクロールを許可 */
-            overflow: hidden; 
+            width: 100%;
+            touch-action: pan-y;
+            overflow: hidden;
         }
         #day-modal-card-container {
             display: flex;
@@ -361,9 +364,9 @@
         .modal-date.date-sat { color: #1976D2; }
 
         .modal-holiday-name {
-            font-size: 0.9rem; /* 少し小さく */
+            font-size: 0.9rem;
             font-weight: bold;
-            color: #e63946; /* 赤字に */
+            color: #e63946;
         }
         .modal-level {
             display: flex;
@@ -439,6 +442,11 @@
             color: white;
             padding: 4px 10px;
             border-radius: 4px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        .chart-legend-item.unfocused {
+            opacity: 0.3;
         }
         .chart-wrapper {
              width: 100%;
@@ -583,10 +591,10 @@
              <div class="modal-large-header">
                 <span id="chart-month-year-display" class="chart-month-display"></span>
                  <div class="chart-legend">
-                    <div class="chart-legend-item" style="--color: #e63946;">
+                    <div id="legend-cars" class="chart-legend-item" style="--color: #e63946;">
                         <span>AI予測駐車台数</span>
                     </div>
-                    <div class="chart-legend-item" style="--color: #888;">
+                    <div id="legend-people" class="chart-legend-item" style="--color: #888;">
                         <span>AI予測観光客数</span>
                     </div>
                 </div>
@@ -642,6 +650,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const chartMonthYearDisplay = document.getElementById('chart-month-year-display');
     const forecastCanvas = document.getElementById('forecastChart');
     let forecastChartInstance;
+    let focusedDatasetIndex = -1; 
 
     const baseDate = new Date();
     baseDate.setDate(1);
@@ -767,6 +776,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function renderChart(year, month) {
         if (forecastChartInstance) forecastChartInstance.destroy();
+        focusedDatasetIndex = -1;
         
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const labels = Array.from({ length: daysInMonth }, (_, i) => `${i + 1}`);
@@ -810,6 +820,37 @@ document.addEventListener('DOMContentLoaded', function() {
         
         chartMonthYearDisplay.textContent = `${year}年${month + 1}月`;
         
+        const legendCars = document.getElementById('legend-cars');
+        const legendPeople = document.getElementById('legend-people');
+        
+        const updateChartFocus = (focusIndex) => {
+            focusedDatasetIndex = focusedDatasetIndex === focusIndex ? -1 : focusIndex;
+            
+            legendCars.classList.toggle('unfocused', focusedDatasetIndex === 0);
+            legendPeople.classList.toggle('unfocused', focusedDatasetIndex === 1);
+            
+            forecastChartInstance.data.datasets.forEach((dataset, index) => {
+                const isCarDataset = dataset.label.includes('駐車台数');
+                const originalColor = isCarDataset ? '#e63946' : '#888';
+                const transparentColor = isCarDataset ? 'rgba(230, 57, 70, 0.2)' : 'rgba(136, 136, 136, 0.2)';
+
+                if (focusedDatasetIndex === -1 || index === focusedDatasetIndex) {
+                    dataset.borderColor = originalColor;
+                    dataset.backgroundColor = originalColor;
+                } else {
+                    dataset.borderColor = transparentColor;
+                    dataset.backgroundColor = transparentColor;
+                }
+            });
+            
+            forecastChartInstance.options.plugins.tooltip.enabled = (focusedDatasetIndex === -1);
+            forecastChartInstance.update();
+        };
+        
+        legendCars.onclick = () => updateChartFocus(1);
+        legendPeople.onclick = () => updateChartFocus(0);
+
+
         forecastChartInstance = new Chart(forecastCanvas, {
             type: 'line',
             data: {
@@ -833,7 +874,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 ]
             },
-            plugins: [chartBackgroundPlugin],
+            plugins: [chartBackgroundPlugin, ChartDataLabels],
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -852,6 +893,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         footerColor: '#333',
                         borderColor: '#DDDDDD',
                         borderWidth: 1,
+                        displayColors: true,
                         callbacks: {
                             title: function(tooltipItems) {
                                 const index = tooltipItems[0].dataIndex;
@@ -860,7 +902,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const week = [ "日", "月", "火", "水", "木", "金", "土" ];
                                 return `${month+1}月${day}日(${week[dayOfWeek]})`;
                             },
-                            afterBody: function(tooltipItems) {
+                            footer: function(tooltipItems) {
                                 const index = tooltipItems[0].dataIndex;
                                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(index + 1).padStart(2, '0')}`;
                                 const data = allData.find(d => d.date === dateStr);
@@ -871,6 +913,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                 return `\n${icons[level - 1]} ${desc}`;
                             }
                         },
+                    },
+                    datalabels: {
+                        display: (context) => {
+                            return context.datasetIndex === focusedDatasetIndex;
+                        },
+                        align: 'top',
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        borderRadius: 4,
+                        color: 'white',
+                        font: {
+                            size: 10,
+                        },
+                        padding: 4
                     }
                 },
                 scales: {
@@ -1031,7 +1086,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     closeDayModalButton.addEventListener('click', () => modalOverlay.classList.remove('active'));
     modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) {
+        if (e.target.id === 'modal-overlay') {
              modalOverlay.classList.remove('active');
         }
     });
@@ -1069,7 +1124,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             // スワイプが不十分な場合は元に戻る
             modalCardContainer.style.transform = 'translateX(-100%)';
-            return; // インデックス変更がないので再構築不要
+            return;
         }
 
         // アニメーション完了後にカードを再構築
