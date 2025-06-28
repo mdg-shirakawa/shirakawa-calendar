@@ -314,39 +314,52 @@
         }
         
         /* --- 日付詳細モーダル --- */
-        #day-modal-content {
+        .modal-content-day {
             position: relative;
-            width: 90%;
-            max-width: 350px;
-            height: auto;
-            overflow: hidden; /* スワイプではみ出すカードを隠す */
-            touch-action: pan-y;
-        }
-        #day-modal-card-container {
-            display: flex;
-            position: relative;
-        }
-        .modal-card {
-            width: 100%;
-            flex-shrink: 0;
             padding: 25px 20px;
             border-radius: 8px;
+            width: 90%;
+            max-width: 350px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             text-align: center;
             line-height: 1.8;
             color: #333;
+            transition: background-color 0.3s;
+        }
+        
+        .modal-swiper {
+            position: relative;
+            width: 100%;
+            touch-action: pan-y;
+        }
+        .modal-card-container {
+            display: flex;
+            position: relative;
+            left: -100%;
+            width: 300%;
+        }
+        .modal-card {
+            width: 33.33%;
+            flex-shrink: 0;
+        }
+        .modal-card.is-moving {
+            transition: transform 0.3s ease-out;
         }
 
         .modal-date {
             font-size: 1.5rem;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
         }
-        .modal-holiday {
+        .holiday-name-modal {
             font-size: 1rem;
             font-weight: bold;
             color: #c0392b;
-            margin-bottom: 10px;
+            margin-left: 8px;
         }
         .modal-level {
             display: flex;
@@ -382,7 +395,7 @@
             border-radius: 8px;
             width: 95%;
             max-width: 600px;
-            height: 70vh;
+            height: 70vh; 
             display: flex;
             flex-direction: column;
             position: relative;
@@ -874,16 +887,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         chartModalOverlay.classList.add('active');
     }
+    
+    function updateModal(index, animate = false) {
+        if (index < 0 || index >= dataWithClickableDates.length) return;
 
-    function createModalCard(index) {
-        const card = document.createElement('div');
-        card.className = 'modal-card';
-        
-        if (index < 0 || index >= dataWithClickableDates.length) {
-            // データ範囲外の場合は空のカードを返す
-            return card;
-        }
-
+        currentModalIndex = index;
         const data = dataWithClickableDates[index];
         const date = new Date(data.date + 'T00:00:00');
         const dayOfWeek = date.getDay();
@@ -892,41 +900,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const holidayName = holidays[data.date];
         const level = getCongestionLevel(data.cars);
         const bgColor = getComputedStyle(document.documentElement).getPropertyValue(`--bg-level-${level}`).trim();
-
-        card.style.backgroundColor = bgColor;
-        card.innerHTML = `
-            <h2 class="modal-date">${formattedDate}</h2>
-            <p class="modal-holiday" style="display: ${holidayName ? 'block' : 'none'}">${holidayName || ''}</p>
-            <div class="modal-level">
-                <span class="level-badge level-badge-${level}">${level}</span> ${levelDescriptions[level]}
-            </div>
-            <div class="modal-stats">
-                <p>AI予測駐車台数: ${data.cars}台</p>
-                <p>AI予測観光客数: ${data.people}人</p>
-            </div>
-            <div class="modal-notes">
-                <p>※予測人数は普通車の台数のみから換算したものです。</p>
-                <p>※普通車の台数はせせらぎ、みだしま、寺尾の合算です。</p>
-            </div>
-        `;
-        return card;
-    }
-    
-    function setupSwipeModal() {
-        modalCardContainer.innerHTML = '';
-        modalCardContainer.style.transition = 'none';
-
-        const prevCard = createModalCard(currentModalIndex - 1);
-        const currentCard = createModalCard(currentModalIndex);
-        const nextCard = createModalCard(currentModalIndex + 1);
-
-        modalCardContainer.appendChild(prevCard);
-        modalCardContainer.appendChild(currentCard);
-        modalCardContainer.appendChild(nextCard);
         
-        modalCardContainer.style.transform = `translateX(-100%)`;
+        const card = document.querySelector('.modal-card[data-index="' + index + '"]');
+        if (card) {
+            const modalDateEl = card.querySelector('.modal-date');
+            const modalHolidayEl = card.querySelector('.modal-holiday');
+            const modalLevelEl = card.querySelector('.modal-level');
+            const modalCarsEl = card.querySelector('#modal-cars');
+            const modalPeopleEl = card.querySelector('#modal-people');
+            
+            modalDateEl.innerHTML = `${formattedDate} <span class="holiday-name-modal" style="display: ${holidayName ? 'inline' : 'none'}">${holidayName || ''}</span>`;
+            modalLevelEl.innerHTML = `<span class="level-badge level-badge-${level}">${level}</span> ${levelDescriptions[level]}`;
+            modalCarsEl.textContent = `AI予測駐車台数: ${data.cars}台`;
+            modalPeopleEl.textContent = `AI予測観光客数: ${data.people}人`;
+            card.style.backgroundColor = bgColor;
+        }
     }
-
 
     async function fetchDataAndRender() {
         const isUrlValid = (url) => url && url.startsWith('http') && url !== 'ここにURLを貼り付け';
@@ -989,6 +978,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
     });
     
+    // --- スワイプ機能付きモーダル表示 ---
     calendarBody.addEventListener('click', (e) => {
         const dayCell = e.target.closest('.day.clickable');
         if (!dayCell) return;
@@ -997,7 +987,8 @@ document.addEventListener('DOMContentLoaded', function() {
         currentModalIndex = dataWithClickableDates.findIndex(d => d.date === dateStr);
 
         if(currentModalIndex !== -1) {
-            setupSwipeModal();
+            modalCardContainer.style.transition = 'none'; // アニメーションを一旦無効化
+            setupSwipeModal(currentModalIndex);
             modalOverlay.classList.add('active');
         }
     });
@@ -1008,48 +999,104 @@ document.addEventListener('DOMContentLoaded', function() {
             modalOverlay.classList.remove('active');
         }
     });
+    
+    function setupSwipeModal(index) {
+        modalCardContainer.innerHTML = '';
+        
+        // 3枚のカード（前、現在、次）を生成
+        const prevIndex = index - 1;
+        const nextIndex = index + 1;
 
-    // --- スワイプ機能 ---
+        const prevCard = createModalCard(prevIndex);
+        const currentCard = createModalCard(index);
+        const nextCard = createModalCard(nextIndex);
+
+        if (prevCard) modalCardContainer.appendChild(prevCard);
+        if (currentCard) modalCardContainer.appendChild(currentCard);
+        if (nextCard) modalCardContainer.appendChild(nextCard);
+
+        // 中央のカードが表示されるように初期位置を調整
+        modalCardContainer.style.transform = `translateX(-${(prevCard ? 1 : 0) * 100}%)`;
+    }
+
+    function createModalCard(index) {
+        const card = document.createElement('div');
+        card.className = 'modal-card modal-content-day';
+
+        if (index < 0 || index >= dataWithClickableDates.length) {
+            return card; // 空のカードを返す
+        }
+
+        const data = dataWithClickableDates[index];
+        const date = new Date(data.date + 'T00:00:00');
+        const dayOfWeek = date.getDay();
+        const week = ["日", "月", "火", "水", "木", "金", "土"];
+        const formattedDate = `${date.getMonth() + 1}月${date.getDate()}日`;
+        const holidayName = holidays[data.date];
+        const level = getCongestionLevel(data.cars);
+        const bgColor = getComputedStyle(document.documentElement).getPropertyValue(`--bg-level-${level}`).trim();
+
+        card.style.backgroundColor = bgColor;
+        card.innerHTML = `
+            <div class="modal-date">
+                ${formattedDate}<span>(${week[dayOfWeek]})</span>
+                <span class="holiday-name-modal" style="display: ${holidayName ? 'inline' : 'none'}">${holidayName || ''}</span>
+            </div>
+            <div class="modal-level">
+                <span class="level-badge level-badge-${level}">${level}</span> ${levelDescriptions[level]}
+            </div>
+            <div class="modal-stats">
+                <p>AI予測駐車台数: ${data.cars}台</p>
+                <p>AI予測観光客数: ${data.people}人</p>
+            </div>
+            <div class="modal-notes">
+                <p>※予測人数は普通車の台数のみから換算したものです。</p>
+                <p>※普通車の台数はせせらぎ、みだしま、寺尾の合算です。</p>
+            </div>
+        `;
+        return card;
+    }
+    
     modalSwiper.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-        modalCardContainer.style.transition = 'none';
+        touchStartX = e.touches[0].clientX;
         isSwiping = true;
+        modalCardContainer.style.transition = 'none';
     });
-
+    
     modalSwiper.addEventListener('touchmove', (e) => {
         if (!isSwiping) return;
-        touchMoveX = e.changedTouches[0].screenX;
+        touchMoveX = e.touches[0].clientX;
         const diff = touchMoveX - touchStartX;
-        modalCardContainer.style.transform = `translateX(calc(-100% + ${diff}px))`;
+        const baseTranslate = currentModalIndex > 0 ? -100 : 0;
+        modalCardContainer.style.transform = `translateX(calc(${baseTranslate}% + ${diff}px))`;
     });
 
     modalSwiper.addEventListener('touchend', (e) => {
         if (!isSwiping) return;
         isSwiping = false;
-        touchEndX = e.changedTouches[0].screenX;
-        const diff = touchEndX - touchStartX;
+        const diff = e.changedTouches[0].clientX - touchStartX;
         const swipeThreshold = modalSwiper.offsetWidth / 4;
-
+        
         modalCardContainer.style.transition = 'transform 0.3s ease-out';
-
+        
         if (diff < -swipeThreshold && currentModalIndex < dataWithClickableDates.length - 1) {
-            // 左スワイプ -> 次の日へ
+            // 左スワイプ -> 次へ
             currentModalIndex++;
-            modalCardContainer.style.transform = 'translateX(-200%)';
         } else if (diff > swipeThreshold && currentModalIndex > 0) {
-            // 右スワイプ -> 前の日へ
+            // 右スワイプ -> 前へ
             currentModalIndex--;
-            modalCardContainer.style.transform = 'translateX(0%)';
-        } else {
-            // スワイプが不十分な場合は元に戻る
-            modalCardContainer.style.transform = 'translateX(-100%)';
         }
-    });
-    
-    modalCardContainer.addEventListener('transitionend', () => {
-        setupSwipeModal();
-    });
 
+        // 最終的な位置にスライド
+        const finalTranslate = currentModalIndex > 0 ? -100 : 0;
+        modalCardContainer.style.transform = `translateX(${finalTranslate}%)`;
+        
+        // アニメーション完了後にカードを再構築
+        setTimeout(() => {
+            modalCardContainer.style.transition = 'none';
+            setupSwipeModal(currentModalIndex);
+        }, 300);
+    });
 
     // --- 利用規約モーダルのイベント ---
     openTermsLink.addEventListener('click', () => {
