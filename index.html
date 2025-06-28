@@ -317,21 +317,26 @@
         /* --- 日付詳細モーダル（スワイプ機能対応） --- */
         #day-modal-swiper {
             position: relative;
-            width: 90%;
-            max-width: 350px;
+            width: 100%; /* スワイパーは画面幅いっぱいに */
             touch-action: pan-y; /* 縦スクロールを許可 */
-            overflow: hidden; /* はみ出したカードを隠す */
+            overflow: hidden; 
         }
         #day-modal-card-container {
             display: flex;
             position: relative;
-            /* transitionはJSで制御 */
         }
         .modal-card {
             width: 100%;
             flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+        }
+        .modal-card-content {
+            position: relative;
             padding: 25px 20px;
             border-radius: 8px;
+            width: 90%;
+            max-width: 350px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             text-align: center;
             line-height: 1.8;
@@ -339,17 +344,26 @@
             background-color: white; /* デフォルト背景 */
         }
 
+        .modal-date-wrapper {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5em;
+            min-height: 2.2rem;
+            margin-bottom: 10px;
+        }
         .modal-date {
             font-size: 1.5rem;
             font-weight: bold;
-            margin-bottom: 5px;
         }
-        .modal-holiday {
-            font-size: 1rem;
+        .modal-date.date-sun { color: #e63946; }
+        .modal-date.date-sat { color: #1976D2; }
+
+        .modal-holiday-name {
+            font-size: 0.9rem; /* 少し小さく */
             font-weight: bold;
-            color: #c0392b;
-            margin-bottom: 10px;
-            min-height: 1.2em; /* 高さを確保 */
+            color: #e63946; /* 赤字に */
         }
         .modal-level {
             display: flex;
@@ -638,7 +652,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentModalIndex = -1;
 
     let touchStartX = 0;
-    let touchMoveX = 0;
     let isSwiping = false;
 
     const limitDate = new Date(baseDate);
@@ -884,26 +897,33 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function createModalCard(index) {
         const card = document.createElement('div');
-        card.className = 'modal-card modal-content-day';
+        card.className = 'modal-card';
+        const content = document.createElement('div');
+        content.className = 'modal-card-content';
+        card.appendChild(content);
 
         if (index < 0 || index >= dataWithClickableDates.length) {
-            return card; // 空のカードを返す
+            return card; 
         }
 
         const data = dataWithClickableDates[index];
         const date = new Date(data.date + 'T00:00:00');
         const dayOfWeek = date.getDay();
         const week = ["日", "月", "火", "水", "木", "金", "土"];
-        const formattedDate = `${date.getMonth() + 1}月${date.getDate()}日`;
+        const formattedDate = `${date.getMonth() + 1}月${date.getDate()}日(${week[dayOfWeek]})`;
         const holidayName = holidays[data.date];
         const level = getCongestionLevel(data.cars);
         const bgColor = getComputedStyle(document.documentElement).getPropertyValue(`--bg-level-${level}`).trim();
+        
+        let dateColorClass = '';
+        if (dayOfWeek === 0 || holidayName) dateColorClass = 'date-sun';
+        else if (dayOfWeek === 6) dateColorClass = 'date-sat';
 
-        card.style.backgroundColor = bgColor;
-        card.innerHTML = `
-            <div class="modal-date">
-                ${formattedDate}<span>(${week[dayOfWeek]})</span>
-                <span class="holiday-name-modal" style="display: ${holidayName ? 'inline' : 'none'}">${holidayName || ''}</span>
+        content.style.backgroundColor = bgColor;
+        content.innerHTML = `
+            <div class="modal-date-wrapper">
+                <span class="modal-date ${dateColorClass}">${formattedDate}</span>
+                <span class="modal-holiday-name" style="display: ${holidayName ? 'inline' : 'none'}">${holidayName || ''}</span>
             </div>
             <div class="modal-level">
                 <span class="level-badge level-badge-${level}">${level}</span> ${levelDescriptions[level]}
@@ -1011,7 +1031,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     closeDayModalButton.addEventListener('click', () => modalOverlay.classList.remove('active'));
     modalOverlay.addEventListener('click', (e) => {
-        if (e.target.id === 'modal-overlay') {
+        if (e.target === modalOverlay) {
              modalOverlay.classList.remove('active');
         }
     });
@@ -1025,7 +1045,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     modalSwiper.addEventListener('touchmove', (e) => {
         if (!isSwiping) return;
-        touchMoveX = e.touches[0].clientX;
+        let touchMoveX = e.touches[0].clientX;
         const diff = touchMoveX - touchStartX;
         modalCardContainer.style.transform = `translateX(calc(-100% + ${diff}px))`;
     });
@@ -1040,12 +1060,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (diff < -swipeThreshold && currentModalIndex < dataWithClickableDates.length - 1) {
             // 左スワイプ -> 次へ
-            modalCardContainer.style.transform = 'translateX(-200%)';
             currentModalIndex++;
+            modalCardContainer.style.transform = 'translateX(-200%)';
         } else if (diff > swipeThreshold && currentModalIndex > 0) {
             // 右スワイプ -> 前へ
-            modalCardContainer.style.transform = 'translateX(0%)';
             currentModalIndex--;
+            modalCardContainer.style.transform = 'translateX(0%)';
         } else {
             // スワイプが不十分な場合は元に戻る
             modalCardContainer.style.transform = 'translateX(-100%)';
