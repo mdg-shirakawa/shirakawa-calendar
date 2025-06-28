@@ -7,7 +7,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
-    <!-- グラフ表示ライブラリ(Chart.js)の追加 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* === ここからCSS（デザイン設定） === */
@@ -309,24 +308,23 @@
             color: #aaa;
             cursor: pointer;
             line-height: 1;
-            z-index: 10;
         }
         .close-button:hover {
             color: #333;
         }
         
         /* --- 日付詳細モーダル --- */
-        .modal-swiper {
+        #day-modal-content {
+            position: relative;
             width: 90%;
             max-width: 350px;
             height: auto;
-            position: relative;
-            overflow: hidden;
+            overflow: hidden; /* スワイプではみ出すカードを隠す */
+            touch-action: pan-y;
         }
-        .modal-card-container {
+        #day-modal-card-container {
             display: flex;
-            height: 100%;
-            /* transitionはJSで制御 */
+            position: relative;
         }
         .modal-card {
             width: 100%;
@@ -384,7 +382,7 @@
             border-radius: 8px;
             width: 95%;
             max-width: 600px;
-            height: 70vh; /* グラフの高さを調整 */
+            height: 70vh;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -525,17 +523,14 @@
         </div>
     </div>
     
-    <!-- 日付詳細モーダル -->
     <div id="modal-overlay" class="modal-overlay">
-        <div class="modal-swiper" id="modal-swiper">
-            <div class="modal-card-container" id="modal-card-container">
-                <!-- カードはJSで動的に生成 -->
-            </div>
+        <div id="day-modal-swiper" class="modal-swiper">
+            <div id="day-modal-card-container" class="modal-card-container">
+                </div>
         </div>
         <button id="close-day-modal" class="close-button" style="position:fixed; top:10px; right:15px;">&times;</button>
     </div>
     
-    <!-- 利用規約モーダル -->
     <div id="terms-modal-overlay" class="modal-overlay">
         <div class="modal-content-large modal-content-terms">
             <div class="modal-large-header">
@@ -562,7 +557,6 @@
         </div>
     </div>
 
-    <!-- グラフ表示モーダル -->
     <div id="chart-modal-overlay" class="modal-overlay">
         <div class="modal-content-large">
              <div class="modal-large-header">
@@ -614,8 +608,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const nextButton = document.getElementById('next-month');
     
     const modalOverlay = document.getElementById('modal-overlay');
-    const modalSwiper = document.getElementById('modal-swiper');
-    const modalContainer = document.getElementById('modal-card-container');
+    const modalSwiper = document.getElementById('day-modal-swiper');
+    const modalCardContainer = document.getElementById('day-modal-card-container');
     const closeDayModalButton = document.getElementById('close-day-modal');
     
     const termsModalOverlay = document.getElementById('terms-modal-overlay');
@@ -685,14 +679,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const dateStr = `${cellYear}-${String(cellMonth + 1).padStart(2, '0')}-${String(cellDay).padStart(2, '0')}`;
             const data = allData.find(d => d.date === dateStr);
             const dayOfWeek = currentCellDate.getDay();
-            const week = [ "日", "月", "火", "水", "木", "金", "土" ];
-            const isHoliday = holidays[dateStr];
             
             let today = new Date();
             const isToday = today.getFullYear() === cellYear && today.getMonth() === cellMonth && today.getDate() === cellDay;
 
             let dateColorClass = '';
-            if (dayOfWeek === 0 || isHoliday) dateColorClass = 'date-sun';
+            if (dayOfWeek === 0 || holidays[dateStr]) dateColorClass = 'date-sun';
             else if (dayOfWeek === 6) dateColorClass = 'date-sat';
 
             let dayCell = document.createElement('div');
@@ -763,7 +755,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const peopleData = [];
         const tickStyles = [];
         const backgroundColors = [];
-        const pointRadii = [];
         
         let yMax = 0;
         const today = new Date();
@@ -811,8 +802,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         backgroundColor: '#888',
                         tension: 0.1,
                         spanGaps: true,
-                        pointRadius: 3,
-                        pointHoverRadius: 6
                     },
                     {
                         label: 'AI予測駐車台数',
@@ -821,8 +810,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         backgroundColor: '#e63946',
                         tension: 0.1,
                         spanGaps: true,
-                        pointRadius: 3,
-                        pointHoverRadius: 6
                     }
                 ]
             },
@@ -853,7 +840,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const week = [ "日", "月", "火", "水", "木", "金", "土" ];
                                 return `${month+1}月${day}日(${week[dayOfWeek]})`;
                             },
-                            footer: function(tooltipItems) {
+                            afterBody: function(tooltipItems) {
                                 const index = tooltipItems[0].dataIndex;
                                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(index + 1).padStart(2, '0')}`;
                                 const data = allData.find(d => d.date === dateStr);
@@ -861,7 +848,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const level = getCongestionLevel(data.cars);
                                 const desc = levelDescriptions[level];
                                 const icons = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
-                                return `${icons[level - 1]} ${desc}`;
+                                return `\n${icons[level - 1]} ${desc}`;
                             }
                         },
                     }
@@ -889,7 +876,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function createModalCard(index) {
-        if (index < 0 || index >= dataWithClickableDates.length) return null;
+        const card = document.createElement('div');
+        card.className = 'modal-card';
+        
+        if (index < 0 || index >= dataWithClickableDates.length) {
+            // データ範囲外の場合は空のカードを返す
+            return card;
+        }
 
         const data = dataWithClickableDates[index];
         const date = new Date(data.date + 'T00:00:00');
@@ -900,8 +893,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const level = getCongestionLevel(data.cars);
         const bgColor = getComputedStyle(document.documentElement).getPropertyValue(`--bg-level-${level}`).trim();
 
-        const card = document.createElement('div');
-        card.className = 'modal-card';
         card.style.backgroundColor = bgColor;
         card.innerHTML = `
             <h2 class="modal-date">${formattedDate}</h2>
@@ -920,6 +911,22 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         return card;
     }
+    
+    function setupSwipeModal() {
+        modalCardContainer.innerHTML = '';
+        modalCardContainer.style.transition = 'none';
+
+        const prevCard = createModalCard(currentModalIndex - 1);
+        const currentCard = createModalCard(currentModalIndex);
+        const nextCard = createModalCard(currentModalIndex + 1);
+
+        modalCardContainer.appendChild(prevCard);
+        modalCardContainer.appendChild(currentCard);
+        modalCardContainer.appendChild(nextCard);
+        
+        modalCardContainer.style.transform = `translateX(-100%)`;
+    }
+
 
     async function fetchDataAndRender() {
         const isUrlValid = (url) => url && url.startsWith('http') && url !== 'ここにURLを貼り付け';
@@ -1003,27 +1010,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // --- スワイプ機能 ---
-    function setupSwipeModal() {
-        modalContainer.innerHTML = '';
-        modalContainer.style.transition = 'none';
-        modalContainer.style.transform = 'translateX(0)';
-        
-        const prevCard = createModalCard(currentModalIndex - 1);
-        const currentCard = createModalCard(currentModalIndex);
-        const nextCard = createModalCard(currentModalIndex + 1);
-
-        if (prevCard) modalContainer.appendChild(prevCard);
-        if (currentCard) modalContainer.appendChild(currentCard);
-        if (nextCard) modalContainer.appendChild(nextCard);
-        
-        // 初期位置の設定
-        let initialOffset = prevCard ? -100 : 0;
-        modalContainer.style.transform = `translateX(${initialOffset}%)`;
-    }
-
     modalSwiper.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
-        modalContainer.style.transition = 'none';
+        modalCardContainer.style.transition = 'none';
         isSwiping = true;
     });
 
@@ -1031,40 +1020,36 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!isSwiping) return;
         touchMoveX = e.changedTouches[0].screenX;
         const diff = touchMoveX - touchStartX;
-        const initialOffset = currentModalIndex > 0 ? -100 : 0;
-        const cardWidth = modalSwiper.offsetWidth;
-        modalContainer.style.transform = `translateX(${initialOffset}% + ${diff}px)`;
+        modalCardContainer.style.transform = `translateX(calc(-100% + ${diff}px))`;
     });
 
     modalSwiper.addEventListener('touchend', (e) => {
         if (!isSwiping) return;
         isSwiping = false;
         touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-    });
-
-    function handleSwipe() {
         const diff = touchEndX - touchStartX;
         const swipeThreshold = modalSwiper.offsetWidth / 4;
 
-        modalContainer.style.transition = 'transform 0.3s ease-out';
+        modalCardContainer.style.transition = 'transform 0.3s ease-out';
 
         if (diff < -swipeThreshold && currentModalIndex < dataWithClickableDates.length - 1) {
-            // 左スワイプ
+            // 左スワイプ -> 次の日へ
             currentModalIndex++;
-            const newOffset = currentModalIndex > 0 ? -100 : 0;
-             modalContainer.style.transform = `translateX(${newOffset * (currentModalIndex - (currentModalIndex > 1 ? 1 : 0) ) }%)`;
+            modalCardContainer.style.transform = 'translateX(-200%)';
         } else if (diff > swipeThreshold && currentModalIndex > 0) {
-            // 右スワイプ
+            // 右スワイプ -> 前の日へ
             currentModalIndex--;
-             const newOffset = currentModalIndex > 0 ? -100 : 0;
-             modalContainer.style.transform = `translateX(${newOffset * (currentModalIndex - (currentModalIndex > 0 ? 1: 0) ) }%)`;
+            modalCardContainer.style.transform = 'translateX(0%)';
+        } else {
+            // スワイプが不十分な場合は元に戻る
+            modalCardContainer.style.transform = 'translateX(-100%)';
         }
-        
-        // アニメーション完了後にカードを再構築
-        setTimeout(setupSwipeModal, 300);
-    }
+    });
     
+    modalCardContainer.addEventListener('transitionend', () => {
+        setupSwipeModal();
+    });
+
 
     // --- 利用規約モーダルのイベント ---
     openTermsLink.addEventListener('click', () => {
