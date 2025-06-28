@@ -7,9 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
-    <!-- グラフ表示ライブラリ(Chart.js)の追加 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- グラフのデータラベル表示プラグインの追加 -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
         /* === ここからCSS（デザイン設定） === */
@@ -344,7 +342,7 @@
             text-align: center;
             line-height: 1.8;
             color: #333;
-            background-color: white; /* デフォルト背景 */
+            background-color: white;
         }
 
         .modal-date-wrapper {
@@ -548,17 +546,14 @@
         </div>
     </div>
     
-    <!-- 日付詳細モーダル -->
     <div id="modal-overlay" class="modal-overlay">
         <div id="day-modal-swiper" class="modal-swiper">
             <div id="day-modal-card-container" class="modal-card-container">
-                <!-- スワイプ用のカードはJSで動的に生成 -->
-            </div>
+                </div>
         </div>
         <button id="close-day-modal" class="close-button" style="position:fixed; top:10px; right:15px;">&times;</button>
     </div>
     
-    <!-- 利用規約モーダル -->
     <div id="terms-modal-overlay" class="modal-overlay">
         <div class="modal-content-large modal-content-terms">
             <div class="modal-large-header">
@@ -585,7 +580,6 @@
         </div>
     </div>
 
-    <!-- グラフ表示モーダル -->
     <div id="chart-modal-overlay" class="modal-overlay">
         <div class="modal-content-large">
              <div class="modal-large-header">
@@ -752,7 +746,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateNavButtonsState();
     }
     
-    // グラフの背景色を描画するカスタムプラグイン
     const chartBackgroundPlugin = {
         id: 'chartBackgroundPlugin',
         beforeDatasetsDraw(chart, args, options) {
@@ -777,6 +770,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderChart(year, month) {
         if (forecastChartInstance) forecastChartInstance.destroy();
         focusedDatasetIndex = -1;
+        
+        document.getElementById('legend-cars').classList.remove('unfocused');
+        document.getElementById('legend-people').classList.remove('unfocused');
         
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const labels = Array.from({ length: daysInMonth }, (_, i) => `${i + 1}`);
@@ -820,14 +816,24 @@ document.addEventListener('DOMContentLoaded', function() {
         
         chartMonthYearDisplay.textContent = `${year}年${month + 1}月`;
         
-        const legendCars = document.getElementById('legend-cars');
-        const legendPeople = document.getElementById('legend-people');
-        
         const updateChartFocus = (focusIndex) => {
             focusedDatasetIndex = focusedDatasetIndex === focusIndex ? -1 : focusIndex;
+
+            document.getElementById('legend-cars').classList.toggle('unfocused', focusedDatasetIndex === 0);
+            document.getElementById('legend-people').classList.toggle('unfocused', focusedDatasetIndex === 1);
+
+            let newYMax = yMax;
+            if (focusedDatasetIndex !== -1) {
+                const targetData = (focusedDatasetIndex === 0) ? peopleData : carData;
+                const filteredData = targetData.filter(v => !isNaN(v));
+                if (filteredData.length > 0) {
+                    newYMax = Math.max(...filteredData);
+                } else {
+                    newYMax = yMax;
+                }
+            }
             
-            legendCars.classList.toggle('unfocused', focusedDatasetIndex === 0);
-            legendPeople.classList.toggle('unfocused', focusedDatasetIndex === 1);
+            forecastChartInstance.options.scales.y.max = Math.ceil(newYMax / 500) * 500 + 500;
             
             forecastChartInstance.data.datasets.forEach((dataset, index) => {
                 const isCarDataset = dataset.label.includes('駐車台数');
@@ -843,13 +849,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
-            forecastChartInstance.options.plugins.tooltip.enabled = (focusedDatasetIndex === -1);
             forecastChartInstance.update();
         };
         
-        legendCars.onclick = () => updateChartFocus(1);
-        legendPeople.onclick = () => updateChartFocus(0);
-
+        document.getElementById('legend-cars').onclick = () => updateChartFocus(1);
+        document.getElementById('legend-people').onclick = () => updateChartFocus(0);
 
         forecastChartInstance = new Chart(forecastCanvas, {
             type: 'line',
@@ -884,7 +888,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     legend: { display: false },
                     tooltip: {
-                        enabled: true,
+                        enabled: (context) => focusedDatasetIndex === -1,
                         mode: 'index',
                         intersect: false,
                         backgroundColor: '#FFFFFF',
@@ -937,6 +941,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     y: { 
                         beginAtZero: true,
+                        max: yMax * 1.1,
                         grace: '10%',
                         position: 'left',
                         grid: {
